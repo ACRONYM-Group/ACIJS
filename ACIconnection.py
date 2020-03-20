@@ -52,7 +52,11 @@ class connection:
             responses.put(value)
         
         if cmd["cmdType"] == "setResp":
-            value = json.dumps(["set"])
+            value = json.dumps(["set", cmd["msg"]])
+            responses.put(value)
+
+        if cmd["cmdType"] == "ldResp":
+            value = json.dumps(["ld", cmd["msg"]])
             responses.put(value)
 
 
@@ -63,6 +67,16 @@ class connection:
 
     async def setValue(self, key, dbKey, val):
         await self.ws.send(json.dumps({"cmdType":"set", "key":key, "dbKey":dbKey, "val": val}))
+    
+    async def writeToDisk(self, dbKey):
+        await self.ws.send(json.dumps({"cmdType":"wtd", "dbKey":dbKey}))
+    
+    async def readFromDisk(self, dbKey):
+        await self.ws.send(json.dumps({"cmdType":"rfd", "dbKey":dbKey}))
+
+    async def listDatabase(self, dbKey):
+        await self.ws.send(json.dumps({"cmdType":"listDatabase", "dbKey":dbKey}))
+        return await self.waitForResponse("ld", "None", dbKey)
 
 
     async def waitForResponse(self, type, key, dbKey):
@@ -71,6 +85,12 @@ class connection:
             if self.responses.empty() == False:
                 value = self.responses.get_nowait()
                 cmd = json.loads(value)
-                if cmd[0] == type and cmd[1] == key and cmd[2] == dbKey:
+                if cmd[0] == "get" and cmd[1] == key and cmd[2] == dbKey:
                     hasReturned = True
                     return cmd[3]
+                if cmd[0] == "set" and cmd[1] == key and cmd[2] == dbKey:
+                    hasReturned = True
+                    return cmd[3]
+                if cmd[0] == "ld":
+                    hasReturned = True
+                    return cmd[1]

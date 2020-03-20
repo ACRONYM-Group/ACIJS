@@ -13,6 +13,7 @@ lastResponse = ["None", "None", "None"]
 
 
 connections = {}
+server = 0
 
 #Call from host to start ACI
 def init(type, port=8765, ip="127.0.0.1", name="main"):
@@ -43,6 +44,16 @@ def get(key, dbKey, server="main"):
 
 def set(key, dbKey, val, server="main"):
     asyncio.run(connections[server].setValue(key, dbKey, val))
+
+def writeToDisk(server, dbKey):
+    asyncio.run(connections[server].writeToDisk(dbKey))
+
+def readFromDisk(server, dbKey):
+    asyncio.run(connections[server].readFromDisk(dbKey))
+
+def listDatabase(dbKey, server="main"):
+    output = asyncio.run(connections[server].listDatabase(dbKey))
+    return json.loads(output)
 
 
 

@@ -13,7 +13,8 @@ class server:
         self.dbs = {}
         self.clients = []
 
-        self.dbs["db1"] = database()
+        self.dbs["db1"] = database("db1")
+        self.dbs["db2"] = database("db2")
         self.dbs["db1"].set("val", 15)
 
         asyncio.set_event_loop(loop)
@@ -42,10 +43,33 @@ class server:
                 self.dbs[cmd["dbKey"]].set(cmd["key"], cmd["val"])
                 response = json.dumps({"cmdType":"setResp", "msg":"Value Set."})
                 await websocket.send(response)
+
+            if cmd["cmdType"] == "wtd":
+                self.writeToDisk(cmd["dbKey"])
+
+            if cmd["cmdType"] == "rfd":
+                self.readFromDisk(cmd["dbKey"]) 
+
+            if cmd["cmdType"] == "listDatabase":
+                print("Database List Request")
+                response = json.dumps({"cmdType":"ldResp", "msg":json.dumps(list(self.dbs[cmd["dbKey"]].data.keys()))})
+                await websocket.send(response)
+
             if (response != ""):
                 print(response)
 
     def getResponsePacket(self, key, database):
         return json.dumps({"cmdType":"getResp", "key":key, "val":self.dbs[database].get(key), "dbKey":database})
+
+    def writeToDisk(self, dbKey):
+        if dbKey != "":
+            self.dbs[dbKey].writeToDisk()
+        else:
+            for db in self.dbs:
+                self.dbs[db].writeToDisk()
+    
+    def readFromDisk(self, dbKey):
+        print("Reading Database " + str(dbKey) + " from Disk")
+        self.dbs[dbKey] = database(dbKey, read=True)
 
     
