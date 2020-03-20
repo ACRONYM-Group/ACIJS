@@ -19,7 +19,9 @@ class server:
 
         asyncio.set_event_loop(loop)
         print("Starting Server")
+        self.loadConfig()
         start_server = websockets.serve(self.connectionHandler, self.ip, self.port)
+        print("Opening Websocket Server on " + str(self.ip) + ":" + str(self.port))
 
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
@@ -71,5 +73,19 @@ class server:
     def readFromDisk(self, dbKey):
         print("Reading Database " + str(dbKey) + " from Disk")
         self.dbs[dbKey] = database(dbKey, read=True)
+
+    def loadConfig(self):
+        print("Reading server.conf")
+        try:
+            file = open("./server.conf")
+            config = json.loads(file.read())
+            file.close()
+            print("-Config Read Successfully")
+            self.port = config["port"]
+            self.ip = config["ip"]
+            for db in config["dbs"]:
+                self.readFromDisk(db)
+        except:
+            print("Unable to read config. please initilize databases manually.")
 
     

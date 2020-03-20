@@ -33,13 +33,17 @@ class item:
         file.close()
 
     def readFromDisk(self, readdb):
-        file = open("./" + readdb + "/" + self.key + ".item")
-        print("Reading "+ str("./" + readdb + "/" + self.key + ".item"))
-        data = json.loads(file.read())
-        file.close()
-        self.value = data[1]
-        self.owner = data[2]
-        self.subs = data[3]
+        try:
+            file = open("./" + readdb + "/" + self.key + ".item")
+            print("Reading "+ str("./" + readdb + "/" + self.key + ".item"))
+            data = json.loads(file.read())
+            file.close()
+            self.value = data[1]
+            self.owner = data[2]
+            self.subs = data[3]
+        except:
+            print("WARNING")
+            print("-Unable to read " + str("./" + readdb + "/" + self.key + ".item"))
 
 class database:
     def __init__(self, name, read=False):
