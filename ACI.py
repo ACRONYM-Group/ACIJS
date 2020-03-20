@@ -11,38 +11,41 @@ dbNodePort = "80"
 nodeType = "server"
 lastResponse = ["None", "None", "None"]
 
-
 connections = {}
 
-#Call from host to start ACI
-def init(type, port=8765, ip="127.0.0.1", name="main"):
-    loop = asyncio.get_event_loop()
-    newThread = threading.Thread(target=createServerOrClient, args=(type, port, ip, loop, lastResponse, name), daemon=True)
-    newThread.start()
 
-#Start the ACI Server or Client
-def createServerOrClient(type, port, ip, loop, lastResponse, name):
-    nodeType = type
+def init(aci_type, port=8765, ip="127.0.0.1", name="main"):
+    """
+        Call from host to start ACI
+    """
+    threading.Thread(target=createServerOrClient,
+                     args=(aci_type, port, ip, asyncio.get_event_loop(),
+                           lastResponse, name), daemon=True).start()
+
+
+def create_server_or_client(aci_type, port, ip, loop, last_response, name):
+    """
+        Start the ACI Server or Client
+    """
+    nodeType = aci_type
     if nodeType == "server":
         server = ACIServer.server(loop)
     
     if nodeType == "client":
         connections[name] = ACIconnection.connection(ip, port, loop)
-        
-#Interface Methods for host application
-#Call Get() from the host to return a value
 
-def get(key, dbKey, server="main"):
-    if len(connections) == 0:
-        while len(connections) == 0:
-            time.sleep(0.01)
-    output = asyncio.run(connections[server].getValue(key, dbKey))
-    return output
 
-#Call set() from the host to set a value
+def get_val(key, db_key, server="main"):
+    """
+        Gets a value when called from the host
+    """
+    while len(connections) == 0:
+        time.sleep(0.01)
+    return asyncio.run(connections[server].getValue(key, db_key))
 
-def set(key, dbKey, val, server="main"):
+
+def set_val(key, dbKey, val, server="main"):
+    """
+        Sets a value when called from the host
+    """
     asyncio.run(connections[server].setValue(key, dbKey, val))
-
-
-
