@@ -1,35 +1,37 @@
-import asyncio 
-import websockets
-
-class item:
+class Item:
+    """
+        Database Item
+    """
     def __init__(self, key, value, owner):
         self.key = key
         self.value = value
         self.owner = owner
         self.subs = []
-    
-    def get(self):
+
+    def get_val(self):
         return self.value
 
-    def set(self, value):
+    def set_val(self, value):
         self.value = value
 
-class database:
+
+class Database:
+    """
+        Database
+    """
     def __init__(self):
         self.data = {}
 
-    def get(self, key):
+    def get_val(self, key):
         if (key in self.data):
-            return self.data[key].get()
+            return self.data[key].get_val()
         else:
             return None
 
-    def set(self, key, value):
+    def set_val(self, key, value):
         if not (key in self.data):
-            self.newItem(key, value)
-        self.data[key].set(value)
+            self.new_item(key, value)
+        self.data[key].set_val(value)
 
-    def newItem(self, key, value, owner="self"):
-        self.data[key] = item(key, value, owner)
-        
-    
+    def new_item(self, key, value, owner="self"):
+        self.data[key] = Item(key, value, owner)

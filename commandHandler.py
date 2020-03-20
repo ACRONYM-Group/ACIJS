@@ -1,4 +1,2 @@
-def commandHandler(msg, websocket):
+def command_handler(msg, websocket):
     print(msg)
-    pass
-    
