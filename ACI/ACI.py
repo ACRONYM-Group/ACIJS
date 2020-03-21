@@ -80,7 +80,7 @@ def write_to_disk(db_key, server="main"):
     :param server:
     :return:
     """
-    asyncio.run(connections[server].write_to_disk(db_key))
+    asyncio.run(connections[server].get_interface(db_key).write_to_disk())
 
 
 def read_from_disk(db_key, server="main"):
@@ -90,7 +90,7 @@ def read_from_disk(db_key, server="main"):
     :param server:
     :return:
     """
-    asyncio.run(connections[server].read_from_disk(db_key))
+    asyncio.run(connections[server].get_interface(db_key).read_from_disk())
 
 
 def list_database(db_key, server="main"):
@@ -100,5 +100,5 @@ def list_database(db_key, server="main"):
     :param server:
     :return:
     """
-    output = asyncio.run(connections[server].list_databases(db_key))
+    output = asyncio.run(connections[server].get_interface(db_key).list_databases())
     return json.loads(output)

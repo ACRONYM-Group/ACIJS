@@ -11,10 +11,6 @@ class Server:
         self.dbs = {}
         self.clients = []
 
-        self.dbs["db1"] = Database("db1")
-        self.dbs["db2"] = Database("db2")
-        self.dbs["db1"].set("val", 15)
-
         asyncio.set_event_loop(loop)
         print("Starting Server")
         self.load_config()

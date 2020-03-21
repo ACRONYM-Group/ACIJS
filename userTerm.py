@@ -52,10 +52,10 @@ while True:
             print(item)
     
     if cmd == "wtd":
-        ACI.write_to_disk(default_input("serverID ('main')?: ", "main"), default_input("db_key ('db1')?: ", "db1"))
+        ACI.write_to_disk(default_input("db_key ('db1')?: ", "db1"), default_input("serverID ('main')?: ", "main"))
     
     if cmd == "rfd":
-        ACI.read_from_disk(default_input("ServerID ('main')?: ", "main"), default_input("db_key ('db1')?: ", "db1"))
+        ACI.read_from_disk(default_input("db_key ('db1')?: ", "db1"), default_input("ServerID ('main')?: ", "main"))
     
     if cmd == "cts":
         ACI.init("client", default_input("Port (8765)?: ", 8765),
