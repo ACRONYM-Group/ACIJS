@@ -4,7 +4,7 @@ import websockets
 import json
 from queue import SimpleQueue
 
-from utils import make_blocking
+from ACI.utils import make_blocking
 
 
 async def _recv_handler(websocket, _, responses):
@@ -39,24 +39,6 @@ class DatabaseInterface:
         self.conn = connection
         self.db_key = db_key
 
-    async def _wait_for_response(self, _, key):
-        """
-        Waits for a response
-        :param _:
-        :param key:
-        :return:
-        """
-        while True:
-            if not self.responses.empty():
-                value = self.responses.get_nowait()
-                cmd = json.loads(value)
-                if tuple(cmd) == ("get_val", key, self.db_key):
-                    return cmd[3]
-                elif tuple(cmd) == ("set_val", key, self.db_key):
-                    return cmd[3]
-                elif cmd[0] == "ld":
-                    return cmd[1]
-
     async def write_to_disk(self):
         """
         Write Database data to disk
@@ -80,12 +62,15 @@ class DatabaseInterface:
         :return:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "list_databases", "db_key": self.db_key}))
-        return await self._wait_for_response("ld", None)
+        return await self.conn.wait_for_response("ld", None, self.db_key)
 
     @make_blocking
     async def _get_value(self, key):
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
-        return await self._wait_for_response("get_val", key)
+        print("Sent")
+        response = await self.conn.wait_for_response("get_val", key, self.db_key)
+        print("Got Response")
+        return response
 
     @make_blocking
     async def _set_value(self, key, val):
@@ -114,6 +99,26 @@ class Connection:
         self.responses = SimpleQueue()
 
         threading.Thread(target=self._create, args=(port, ip, loop, self.responses), daemon=True).start()
+
+    async def wait_for_response(self, _, key, db_key):
+        """
+        Waits for a response
+        :param _:
+        :param key:
+        :param db_key:
+        :return:
+        """
+        while True:
+            if not self.responses.empty():
+                value = self.responses.get_nowait()
+                cmd = json.loads(value)
+                print(cmd)
+                if tuple(cmd)[:3] == ("get_val", key, db_key):
+                    return cmd[3]
+                elif tuple(cmd)[:3] == ("set_val", key, db_key):
+                    return cmd[3]
+                elif cmd[0] == "ld":
+                    return cmd[1]
 
     def _create(self, port, ip, loop, responses):
         """

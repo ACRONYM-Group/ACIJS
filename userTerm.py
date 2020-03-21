@@ -21,20 +21,20 @@ time.sleep(0.1)
 while True:
     print("")
     cmd = input("Command?: ")
-    if cmd == "set_val":
+    if cmd == "set":
         ACI.set_value(default_input("Key ('val'): ", "val"), default_input("db_key ('db1')?: ", "db1"), input("Val: "))
     
     if cmd == "sets":
         ACI.set_value(default_input("Key ('val'): ", "val"), default_input("db_key ('db1')?: ", "db1"), input("Val: "),
                       input("ServerID?: "))
 
-    if cmd == "get_val":
-        value = ACI.get(default_input("Key ('val')?: ", "val"), default_input("db_key ('db1')?: ", "db1"))
+    if cmd == "get":
+        value = ACI.get_value(default_input("Key ('val')?: ", "val"), default_input("db_key ('db1')?: ", "db1"))
         print("----------------")
         print("Value =", str(value))
     
     if cmd == "gets":
-        value = ACI.get(default_input("Key ('val')?: ", "val"), default_input("db_key ('db1')?: ", "db1"),
+        value = ACI.get_value(default_input("Key ('val')?: ", "val"), default_input("db_key ('db1')?: ", "db1"),
                         input("ServerID?: "))
         print("----------------")
         print("Value =", str(value))
