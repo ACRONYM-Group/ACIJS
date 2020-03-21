@@ -1,10 +1,12 @@
 import asyncio
-import threading
 import websockets
 import json
 from queue import SimpleQueue
 
 from ACI.utils import make_blocking
+
+
+connections = {}
 
 
 async def _recv_handler(websocket, _, responses):
@@ -39,7 +41,8 @@ class DatabaseInterface:
         self.conn = connection
         self.db_key = db_key
 
-    async def write_to_disk(self):
+    @make_blocking
+    async def _write_to_disk(self):
         """
         Write Database data to disk
 
@@ -47,7 +50,8 @@ class DatabaseInterface:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "wtd", "db_key": self.db_key}))
 
-    async def read_from_disk(self):
+    @make_blocking
+    async def _read_from_disk(self):
         """
         Read Database data from disk
 
@@ -55,21 +59,20 @@ class DatabaseInterface:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "rfd", "db_key": self.db_key}))
 
-    async def list_databases(self):
+    @make_blocking
+    async def _list_databases(self):
         """
         Get a list of all connected databases
 
         :return:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "list_databases", "db_key": self.db_key}))
-        return await self.conn.wait_for_response("ld", None, self.db_key)
+        return json.loads(await self.conn.wait_for_response("ld", None, self.db_key))
 
     @make_blocking
     async def _get_value(self, key):
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
-        print("Sent")
         response = await self.conn.wait_for_response("get_val", key, self.db_key)
-        print("Got Response")
         return response
 
     @make_blocking
@@ -81,24 +84,42 @@ class DatabaseInterface:
 
     def __setitem__(self, key, val):
         return self._set_value(key, val)
+    
+    def write_to_disk(self):
+        self._write_to_disk()
+
+    def read_from_disk(self):
+        self._read_from_disk()
+
+    def list_databases(self):
+        return self._list_databases()
 
 
 class Connection:
     """
         ACI Connection
     """
-    def __init__(self, ip, port, loop):
+    def __init__(self, loop, ip, port, name):
         """
         :param ip:
         :param port:
         :param loop:
         """
+        global connections
+
         self.ip = ip
         self.port = port
         self.ws = 0
         self.responses = SimpleQueue()
+        self.loop = loop
+        self.name = name
 
-        threading.Thread(target=self._create, args=(port, ip, loop, self.responses), daemon=True).start()
+        self.interfaces = {}
+
+        connections[name] = self
+
+    def start(self):
+        self._create(self.port, self.ip, self.loop, self.responses)
 
     async def wait_for_response(self, _, key, db_key):
         """
@@ -112,7 +133,6 @@ class Connection:
             if not self.responses.empty():
                 value = self.responses.get_nowait()
                 cmd = json.loads(value)
-                print(cmd)
                 if tuple(cmd)[:3] == ("get_val", key, db_key):
                     return cmd[3]
                 elif tuple(cmd)[:3] == ("set_val", key, db_key):
@@ -130,7 +150,6 @@ class Connection:
         :param responses:
         :return:
         """
-        print("Starting Client\n---------------\n ")
         asyncio.set_event_loop(loop)
         asyncio.get_event_loop().run_until_complete(self.handler(loop, responses, ip, port))
         asyncio.get_event_loop().run_forever()
@@ -158,7 +177,7 @@ class Connection:
                 for task in pending:
                     task.cancel()
 
-    def get_interface(self, database_key):
+    def _get_interface(self, database_key):
         """
         Gets an interface to the Database with the given keys
 
@@ -166,3 +185,8 @@ class Connection:
         :return:
         """
         return DatabaseInterface(self, database_key)
+
+    def __getitem__(self, key):
+        if key not in self.interfaces:
+            self.interfaces[key] = self._get_interface(key)
+        return self.interfaces[key]

@@ -1,5 +1,7 @@
-from ACI.ACI import init, create_server_or_client, get_value, set_value, write_to_disk, read_from_disk, list_database
+from ACI.ACI import create, stop
 from ACI.ACIConnection import *
 from ACI.ACIServer import *
-
+from ACI.errors import *
 from ACI.database import *
+
+Client = Connection

@@ -5,17 +5,22 @@ from ACI.database import Database
 
 
 class Server:
-    def __init__(self, loop, ip="localhost", port=8765):
+    def __init__(self, loop, ip="localhost", port=8765, _=""):
         self.ip = ip
         self.port = port
         self.dbs = {}
         self.clients = []
+        self.loop = loop
 
-        asyncio.set_event_loop(loop)
-        print("Starting Server")
+    def start(self):
+        """
+        Starts the server running
+        :return:
+        """
+
+        asyncio.set_event_loop(self.loop)
         self.load_config()
         start_server = websockets.serve(self.connection_handler, self.ip, self.port)
-        print("Opening Websocket Server on " + str(self.ip) + ":" + str(self.port))
 
         asyncio.get_event_loop().run_until_complete(start_server)
         asyncio.get_event_loop().run_forever()
@@ -23,7 +28,6 @@ class Server:
     async def connection_handler(self, websocket, path):
         self.clients.append(websocket)
 
-        print("Receiving Connection")
         while True:
             raw_cmd = await websocket.recv()
             cmd = json.loads(raw_cmd)
@@ -45,12 +49,9 @@ class Server:
                 self.read_from_disk(cmd["db_key"])
 
             if cmd["cmdType"] == "list_databases":
-                print("Database List Request")
-                response = json.dumps({"cmdType":"ldResp", "msg":json.dumps(list(self.dbs[cmd["db_key"]].data.keys()))})
+                response = json.dumps({"cmdType": "ldResp",
+                                       "msg": json.dumps(list(self.dbs[cmd["db_key"]].data.keys()))})
                 await websocket.send(response)
-
-            if response != "":
-                print(response)
 
     def get_response_packet(self, key, db_key):
         return json.dumps({"cmdType": "getResp", "key": key, "val": self.dbs[db_key].get(key), "db_key": db_key})
@@ -63,16 +64,13 @@ class Server:
                 self.dbs[db].write_to_disk()
     
     def read_from_disk(self, db_key):
-        print("Reading Database %s from Disk" % db_key)
         self.dbs[db_key] = Database(db_key, read=True)
 
     def load_config(self):
-        print("Reading Server.conf")
         try:
             file = open("./server.conf")
             config = json.loads(file.read())
             file.close()
-            print("-Config Read Successfully")
             self.port = config["port"]
             self.ip = config["ip"]
             for db in config["dbs"]:
