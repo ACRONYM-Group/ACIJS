@@ -1,7 +1,7 @@
 import websockets
 import asyncio
 import json
-from database import Database
+from ACI.database import Database
 
 
 class Server:

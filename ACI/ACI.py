@@ -58,19 +58,19 @@ def get_value(key, db_key, server="main"):
     """
     while len(connections) == 0:
         time.sleep(0.01)
-    return asyncio.run(connections[server].get_value(key, db_key))
+    return connections[server].get_interface(db_key)[key]
 
 
-def set_value(key, dbKey, val, server="main"):
+def set_value(key, db_key, val, server="main"):
     """
     Call from host to set_value a value
     :param key:
-    :param dbKey:
+    :param db_key:
     :param val:
     :param server:
     :return:
     """
-    asyncio.run(connections[server].set_value(key, dbKey, val))
+    connections[server].get_interface(db_key)[key] = val
 
 
 def write_to_disk(db_key, server="main"):
