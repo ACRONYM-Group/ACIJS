@@ -34,7 +34,7 @@ def _help():
 def _connect(ip="127.0.0.1", port=8765, name="main"):
     global connections
 
-    connections[name] = ACI.create(ACI.Client, port, ip, name)
+    connections[name] = ACI.create(ACI.Client, int(port), ip, name)
     return None
 
 
