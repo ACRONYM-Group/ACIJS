@@ -3,7 +3,7 @@ import websockets
 import json
 from queue import SimpleQueue
 
-from ACI.utils import make_blocking
+from ACI.utils import hide_async
 
 
 connections = {}
@@ -33,6 +33,29 @@ async def _recv_handler(websocket, _, responses):
         responses.put(value)
 
 
+class ContextualDatabaseInterface:
+    def __init__(self, interface):
+        self._interface = interface
+        self.conn = interface.conn
+        self.db_key = interface.db_key
+
+        self.record = {}
+
+    def __getitem__(self, item):
+        if item in self._record:
+            return self._record[item]
+        return self.interface[item]
+
+    def __setitem__(self, item, val):
+        self.record[item] = val
+
+    async def set_item(self, key, val):
+        self[key] = val
+
+    async def get_item(self, key):
+        return self[key]
+
+
 class DatabaseInterface:
     """
         ACI Database Interface
@@ -41,8 +64,9 @@ class DatabaseInterface:
         self.conn = connection
         self.db_key = db_key
 
-    @make_blocking
-    async def _write_to_disk(self):
+        self._contextual = None
+
+    async def write_to_disk(self):
         """
         Write Database data to disk
 
@@ -50,8 +74,7 @@ class DatabaseInterface:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "wtd", "db_key": self.db_key}))
 
-    @make_blocking
-    async def _read_from_disk(self):
+    async def read_from_disk(self):
         """
         Read Database data from disk
 
@@ -59,8 +82,7 @@ class DatabaseInterface:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "rfd", "db_key": self.db_key}))
 
-    @make_blocking
-    async def _list_databases(self):
+    async def list_databases(self):
         """
         Get a list of all connected databases
 
@@ -69,30 +91,29 @@ class DatabaseInterface:
         await self.conn.ws.send(json.dumps({"cmdType": "list_databases", "db_key": self.db_key}))
         return json.loads(await self.conn.wait_for_response("ld", None, self.db_key))
 
-    @make_blocking
+    @hide_async
     async def _get_value(self, key):
+        print("Hi, I am running now!")
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
         response = await self.conn.wait_for_response("get_val", key, self.db_key)
         return response
 
-    @make_blocking
-    async def _set_value(self, key, val):
+    async def set_value(self, key, val):
         await self.conn.ws.send(json.dumps({"cmdType": "set_val", "key": key, "db_key": self.db_key, "val": val}))
+
+    async def get_value(self, key):
+        await self[key]
 
     def __getitem__(self, key):
         return self._get_value(key)
 
-    def __setitem__(self, key, val):
-        return self._set_value(key, val)
-    
-    def write_to_disk(self):
-        self._write_to_disk()
+    async def __aenter__(self):
+        self._contextual = ContextualDatabaseInterface(self)
+        return self._contextual
 
-    def read_from_disk(self):
-        self._read_from_disk()
-
-    def list_databases(self):
-        return self._list_databases()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        for key in self._contextual.record:
+            await self.set_value(key, self._contextual.record[key])
 
 
 class Connection:
@@ -118,8 +139,8 @@ class Connection:
 
         connections[name] = self
 
-    def start(self):
-        self._create(self.port, self.ip, self.loop, self.responses)
+    async def start(self):
+        await self._create(self.port, self.ip, self.loop, self.responses)
 
     async def wait_for_response(self, _, key, db_key):
         """
@@ -140,7 +161,7 @@ class Connection:
                 elif cmd[0] == "ld":
                     return cmd[1]
 
-    def _create(self, port, ip, loop, responses):
+    async def _create(self, port, ip, loop, responses):
         """
         Initializes the connection
 
@@ -150,9 +171,7 @@ class Connection:
         :param responses:
         :return:
         """
-        asyncio.set_event_loop(loop)
-        asyncio.get_event_loop().run_until_complete(self.handler(loop, responses, ip, port))
-        asyncio.get_event_loop().run_forever()
+        await self.handler(loop, responses, ip, port)
 
     async def handler(self, loop, responses, ip="127.0.0.1", port=8765):
         """

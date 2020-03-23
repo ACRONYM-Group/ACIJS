@@ -1,4 +1,5 @@
 import ACI
+import asyncio
 
 connections = {}
 LAST = None
@@ -11,7 +12,8 @@ usages = {"help": "help",
           "exit": "exit",
           "ls": "ls [database] [server]",
           "write": "write [database] [server]",
-          "read": "read [database] [server]"}
+          "read": "read [database] [server]",
+          "test": "test"}
 info = {"help": "Displays help information",
         "conn": "Connects to a new server defaults to [main] 127.0.0.1:8765",
         "lsconn": "Lists all of the currently open connections",
@@ -20,10 +22,15 @@ info = {"help": "Displays help information",
         "exit": "Exists the terminal",
         "ls": "Lists all of the values in a database on a server server defaults to main",
         "write": "Writes a database to disk",
-        "read": "Reads a database from disk"}
+        "read": "Reads a database from disk",
+        "test": "Runs test code"}
 
 
-def _help():
+async def _test():
+    connections["main"]["db1"]["val"] += "1"
+
+
+async def _help():
     print("Help")
     print("  Commands:")
     for cmd in usages:
@@ -31,14 +38,14 @@ def _help():
                                    info[cmd]))
 
 
-def _connect(ip="127.0.0.1", port=8765, name="main"):
+async def _connect(ip="127.0.0.1", port=8765, name="main"):
     global connections
 
-    connections[name] = ACI.create(ACI.Client, int(port), ip, name)
+    connections[name] = await ACI.async_create(ACI.Client, int(port), ip, name)
     return None
 
 
-def _list_connections():
+async def _list_connections():
     print("Connections: ")
 
     if len(connections.values()) == 0:
@@ -48,26 +55,28 @@ def _list_connections():
             print("\t[%s] %s:%i" % (name, connections[name].ip, connections[name].port))
 
 
-def _get(key, database, server="main"):
+async def _get(key, database, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    print("%s:%s[%s] = %s" % (server, database, key, connections[server][database][key]))
+    print("Calling")
+    print("%s:%s[%s] = %s" % (server, database, key, await connections[server][database][key]))
 
 
-def _set(key, database, value, server="main"):
+async def _set(key, database, value, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    connections[server][database][key] = value
+    async with connections[server][database] as interface:
+        interface[key] = value
     print("%s:%s[%s] = %s" % (server, database, key, value))
 
 
-def _list(database, server="main"):
+async def _list(database, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    result = connections[server][database].list_databases()
+    result = await connections[server][database].list_databases()
     if len(result) == 0:
         print("\tNone")
     else:
@@ -75,34 +84,34 @@ def _list(database, server="main"):
             print("\t%s" % data)
 
 
-def _write(database, server="main"):
+async def _write(database, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    connections[server][database].write_to_disk()
+    await connections[server][database].write_to_disk()
 
 
-def _read(database, server="main"):
+async def _read(database, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    connections[server][database].read_from_disk()
+    await connections[server][database].read_from_disk()
 
 
 instructions = {"help": _help, "conn": _connect, "lsconn": _list_connections, "get": _get, "set": _set, "ls": _list,
-                "write": _write, "read": _read}
+                "write": _write, "read": _read, "test": _test}
 
 
-def main():
+async def main():
     print("ACI User Terminal\n\n")
-    while instruction() is None:
+    while await instruction() is None:
         pass
 
     print("Exiting Terminal")
     ACI.stop()
 
 
-def exec_instruction(inst, raw_args):
+async def exec_instruction(inst, raw_args):
     global instructions
 
     if inst not in instructions:
@@ -130,7 +139,7 @@ def exec_instruction(inst, raw_args):
             kwargs[key] = True
 
     try:
-        return instructions[inst](*args, **kwargs)
+        return await instructions[inst](*args, **kwargs)
     except TypeError as e:
         if e.args[0].startswith(instructions[inst].__name__):
             print("Incorrect Argument Usage")
@@ -139,7 +148,7 @@ def exec_instruction(inst, raw_args):
             raise e
 
 
-def instruction():
+async def instruction():
     global LAST
 
     inst = input("$> ")
@@ -151,7 +160,7 @@ def instruction():
 
     command, *args = inst.split(" ")
 
-    LAST = exec_instruction(command, args)
+    LAST = await exec_instruction(command, args)
 
 
-main()
+ACI.run(main())
