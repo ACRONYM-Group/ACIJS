@@ -45,9 +45,10 @@ class Item:
 
 
 class Database:
-    def __init__(self, name, read=False):
+    def __init__(self, name, read=False, rootDir="./"):
         self.data = {}
         self.name = name
+        self.rootDir = rootDir
 
         if read:
             self.read_from_disk()
@@ -66,7 +67,7 @@ class Database:
         self.data[key].write_to_disk(self.name)
 
     def new_item(self, key, value, owner="self"):
-        self.data[key] = Item(key, value, owner)
+        self.data[key] = Item(key, value, owner, rootDir=self.rootDir)
 
     def write_to_disk(self):
         filename = "./" + self.name + "/"
