@@ -76,6 +76,7 @@ class Server:
             print("File closed.")
             self.port = config["port"]
             self.ip = config["ip"]
+            self.rootDir = config["rootDir"]
             for db in config["dbs"]:
                 self.read_from_disk(db)
             print("Config read complete")
