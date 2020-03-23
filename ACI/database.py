@@ -28,12 +28,12 @@ class Item:
                 if exc.errno != os.errno.EEXIST:
                     raise
 
-        with open("./%s/%s.Item" % (database, self.key), 'w') as file:
+        with open("./%s/%s.item" % (database, self.key), 'w') as file:
             file.write(json.dumps([self.key, self.value, self.owner, self.subs]))
 
     def read_from_disk(self, read_db):
         try:
-            filename = self.rootDir + "%s/%s.Item" % (read_db, self.key)
+            filename = self.rootDir + "%s/%s.item" % (read_db, self.key)
             with open(filename, 'r') as file:
                 print("Reading", filename)
                 data = json.loads(file.read())
@@ -41,7 +41,7 @@ class Item:
             _, self.value, self.owner, self.subs = data
         except Exception:
             print("WARNING")
-            print("-Unable to read " + str(self.rootDir + read_db + "/" + self.key + ".Item"))
+            print("-Unable to read " + str(self.rootDir + read_db + "/" + self.key + ".item"))
 
 
 class Database:
@@ -83,11 +83,11 @@ class Database:
             val.write_to_disk(self.name)
             item_keys.append(val.key)
 
-        with open(self.rootDir + "%s/%s.Database" % (self.name, self.name), "w") as file:
+        with open(self.rootDir + "%s/%s.database" % (self.name, self.name), "w") as file:
             file.write(json.dumps([self.name, item_keys]))
 
     def read_from_disk(self):
-        filename = self.rootDir + "%s/%s.Database" % (self.name, self.name)
+        filename = self.rootDir + "%s/%s.database" % (self.name, self.name)
         with open(filename, 'r') as file:
             print(filename)
             db_data = json.loads(file.read())
