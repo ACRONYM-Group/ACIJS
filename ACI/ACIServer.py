@@ -1,6 +1,7 @@
 import websockets
 import asyncio
 import json
+import traceback
 from ACI.database import Database
 
 
@@ -64,7 +65,7 @@ class Server:
                 self.dbs[db].write_to_disk()
     
     def read_from_disk(self, db_key):
-        self.dbs[db_key] = Database(db_key, read=True)
+        self.dbs[db_key] = Database(db_key, read=True, rootDir=self.rootDir)
 
     def load_config(self):
         try:
@@ -81,4 +82,5 @@ class Server:
                 self.read_from_disk(db)
             print("Config read complete")
         except Exception:
+            traceback.print_exc()
             print("Unable to read config. Please initialize databases manually.")
