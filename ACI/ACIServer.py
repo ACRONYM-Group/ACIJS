@@ -68,12 +68,16 @@ class Server:
 
     def load_config(self):
         try:
+            print("Opening file")
             file = open("./server.conf")
             config = json.loads(file.read())
+            print(config)
             file.close()
+            print("File closed.")
             self.port = config["port"]
             self.ip = config["ip"]
             for db in config["dbs"]:
                 self.read_from_disk(db)
+            print("Config read complete")
         except Exception:
             print("Unable to read config. Please initialize databases manually.")
