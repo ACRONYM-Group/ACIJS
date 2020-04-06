@@ -1,7 +1,18 @@
-def hide_async(func):
+import asyncio
+
+
+def allow_sync(func):
     """
-    Make a function which is technically async able to block execution
+    Allows a function which returns a future to be run either synchronously or asynchronously
     :param func:
     :return:
     """
-    return func
+    def wrapper(*args, **kwargs):
+        future = func(*args, **kwargs)
+        try:
+            asyncio.get_running_loop()
+            return future
+        except RuntimeError:
+            return asyncio.run(future)
+
+    return wrapper

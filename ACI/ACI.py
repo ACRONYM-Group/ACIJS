@@ -17,10 +17,7 @@ def create(aci_class, port=8765, ip="127.0.0.1", name="main"):
     result = aci_class(loop, ip, port, name)
 
     if asyncio.iscoroutinefunction(result.start):
-        def wrapper():
-            asyncio.run(result.start())
-
-        threading.Thread(target=wrapper, daemon=True).start()
+        asyncio.run(async_create(aci_class, port=8765, ip="127.0.0.1", name="main"))
     else:
         threading.Thread(target=result.start, daemon=True).start()
 
