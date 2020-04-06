@@ -3,12 +3,12 @@ import os
 
 
 class Item:
-    def __init__(self, key, value, owner, read=False, rootDir="./", read_db=""):
+    def __init__(self, key, value, owner, read=False, root_dir="./", read_db=""):
         self.key = key
         self.value = value
         self.owner = owner
         self.subs = []
-        self.rootDir = rootDir
+        self.root_dir = root_dir
         
         if read:
             self.read_from_disk(read_db)
@@ -33,7 +33,7 @@ class Item:
 
     def read_from_disk(self, read_db):
         try:
-            filename = self.rootDir + "%s/%s.item" % (read_db, self.key)
+            filename = self.root_dir + "%s/%s.item" % (read_db, self.key)
             with open(filename, 'r') as file:
                 print("Reading", filename)
                 data = json.loads(file.read())
@@ -41,14 +41,14 @@ class Item:
             _, self.value, self.owner, self.subs = data
         except Exception:
             print("WARNING")
-            print("-Unable to read " + str(self.rootDir + read_db + "/" + self.key + ".item"))
+            print("-Unable to read " + str(self.root_dir + read_db + "/" + self.key + ".item"))
 
 
 class Database:
-    def __init__(self, name, read=False, rootDir="./"):
+    def __init__(self, name, read=False, root_dir="./"):
         self.data = {}
         self.name = name
-        self.rootDir = rootDir
+        self.root_dir = root_dir
 
         if read:
             self.read_from_disk()
@@ -67,7 +67,7 @@ class Database:
         self.data[key].write_to_disk(self.name)
 
     def new_item(self, key, value, owner="self"):
-        self.data[key] = Item(key, value, owner, rootDir=self.rootDir)
+        self.data[key] = Item(key, value, owner, root_dir=self.root_dir)
 
     def write_to_disk(self):
         filename = "./" + self.name + "/"
@@ -83,11 +83,11 @@ class Database:
             val.write_to_disk(self.name)
             item_keys.append(val.key)
 
-        with open(self.rootDir + "%s/%s.database" % (self.name, self.name), "w") as file:
+        with open("%s%s/%s.database" % (self.root_dir, self.name, self.name), "w") as file:
             file.write(json.dumps([self.name, item_keys]))
 
     def read_from_disk(self):
-        filename = self.rootDir + "%s/%s.database" % (self.name, self.name)
+        filename = "%s%s/%s.database" % (self.root_dir, self.name, self.name)
         with open(filename, 'r') as file:
             print(filename)
             db_data = json.loads(file.read())

@@ -126,7 +126,7 @@ class DatabaseInterface:
         return self.get_value(key)
 
     def __setitem__(self, key, val):
-        asyncio.run(self.set_value(key, val))
+        self.set_value(key, val)
 
     async def __aenter__(self):
         self._contextual = ContextualDatabaseInterface(self)
@@ -208,6 +208,7 @@ class Connection:
         uri = "ws://%s:%s" % (ip, port)
 
         async with websockets.connect(uri) as websocket:
+            # print(websocket)
             self.ws = websocket
             while True:
                 consumer_task = asyncio.ensure_future(_recv_handler(self.ws, uri, responses))
