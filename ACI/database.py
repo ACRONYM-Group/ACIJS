@@ -3,12 +3,12 @@ import os
 
 
 class Item:
-    def __init__(self, key, value, owner, read=False, rootDir="./", read_db=""):
+    def __init__(self, key, value, owner, read=False, root_dir="./", read_db=""):
         self.key = key
         self.value = value
         self.owner = owner
         self.subs = []
-        self.rootDir = rootDir
+        self.root_dir = root_dir
         
         if read:
             self.read_from_disk(read_db)
@@ -41,14 +41,15 @@ class Item:
             _, self.value, self.owner, self.subs = data
         except Exception:
             print("WARNING")
+            
             print("-Unable to read " + str(self.rootDir + "/databases/" + read_db + "/" + self.key + ".item"))
 
 
 class Database:
-    def __init__(self, name, read=False, rootDir="./"):
+    def __init__(self, name, read=False, root_dir="./"):
         self.data = {}
         self.name = name
-        self.rootDir = rootDir
+        self.root_dir = root_dir
 
         if read:
             self.read_from_disk()
@@ -67,7 +68,7 @@ class Database:
         self.data[key].write_to_disk(self.name)
 
     def new_item(self, key, value, owner="self"):
-        self.data[key] = Item(key, value, owner, rootDir=self.rootDir)
+        self.data[key] = Item(key, value, owner, root_dir=self.root_dir)
 
     def write_to_disk(self):
         filename = "./databases/" + self.name + "/"

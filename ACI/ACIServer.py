@@ -65,7 +65,7 @@ class Server:
                 self.dbs[db].write_to_disk()
     
     def read_from_disk(self, db_key):
-        self.dbs[db_key] = Database(db_key, read=True, rootDir=self.rootDir)
+        self.dbs[db_key] = Database(db_key, read=True, root_dir=self.rootDir)
 
     def load_config(self):
         try:
