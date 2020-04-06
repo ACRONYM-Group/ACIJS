@@ -110,6 +110,7 @@ class DatabaseInterface:
 
     async def _get_value(self, key):
         print("Hi, I am running now!")
+        print(self.conn.ws)
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
         response = await self.conn.wait_for_response("get_val", key, self.db_key)
         return response
@@ -209,6 +210,8 @@ class Connection:
 
         async with websockets.connect(uri) as websocket:
             self.ws = websocket
+            print("Websocket created")
+            print(self.ws)
             while True:
                 consumer_task = asyncio.ensure_future(_recv_handler(self.ws, uri, responses))
 
