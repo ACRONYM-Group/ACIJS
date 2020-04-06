@@ -3,7 +3,7 @@ import websockets
 import json
 from queue import SimpleQueue
 
-from ACI.utils import hide_async
+from ACI.utils import allow_sync
 
 
 connections = {}
@@ -49,11 +49,25 @@ class ContextualDatabaseInterface:
     def __setitem__(self, item, val):
         self.record[item] = val
 
+    @allow_sync
     async def set_item(self, key, val):
         self[key] = val
 
+    @allow_sync
     async def get_item(self, key):
         return self[key]
+
+    @allow_sync
+    async def list_databases(self):
+        return await self.conn.list_databases()
+
+    @allow_sync
+    async def read_from_disk(self):
+        await self.conn.read_from_disk()
+
+    @allow_sync
+    async def write_to_disk(self):
+        await self.conn.write_to_disk()
 
 
 class DatabaseInterface:
@@ -66,6 +80,7 @@ class DatabaseInterface:
 
         self._contextual = None
 
+    @allow_sync
     async def write_to_disk(self):
         """
         Write Database data to disk
@@ -74,6 +89,7 @@ class DatabaseInterface:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "wtd", "db_key": self.db_key}))
 
+    @allow_sync
     async def read_from_disk(self):
         """
         Read Database data from disk
@@ -82,6 +98,7 @@ class DatabaseInterface:
         """
         await self.conn.ws.send(json.dumps({"cmdType": "rfd", "db_key": self.db_key}))
 
+    @allow_sync
     async def list_databases(self):
         """
         Get a list of all connected databases
@@ -91,21 +108,25 @@ class DatabaseInterface:
         await self.conn.ws.send(json.dumps({"cmdType": "list_databases", "db_key": self.db_key}))
         return json.loads(await self.conn.wait_for_response("ld", None, self.db_key))
 
-    @hide_async
     async def _get_value(self, key):
         print("Hi, I am running now!")
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
         response = await self.conn.wait_for_response("get_val", key, self.db_key)
         return response
 
+    @allow_sync
     async def set_value(self, key, val):
         await self.conn.ws.send(json.dumps({"cmdType": "set_val", "key": key, "db_key": self.db_key, "val": val}))
 
+    @allow_sync
     async def get_value(self, key):
-        await self[key]
+        return await self._get_value(key)
 
     def __getitem__(self, key):
-        return self._get_value(key)
+        return self.get_value(key)
+
+    def __setitem__(self, key, val):
+        asyncio.run(self.set_value(key, val))
 
     async def __aenter__(self):
         self._contextual = ContextualDatabaseInterface(self)
