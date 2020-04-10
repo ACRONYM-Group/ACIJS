@@ -13,7 +13,8 @@ usages = {"help": "help",
           "ls": "ls [database] [server]",
           "write": "write [database] [server]",
           "read": "read [database] [server]",
-          "test": "test"}
+          "test": "test",
+          "cdb": "cdb [name]"}
 info = {"help": "Displays help information",
         "conn": "Connects to a new server defaults to [main] 127.0.0.1:8765",
         "lsconn": "Lists all of the currently open connections",
@@ -23,7 +24,8 @@ info = {"help": "Displays help information",
         "ls": "Lists all of the values in a database on a server server defaults to main",
         "write": "Writes a database to disk",
         "read": "Reads a database from disk",
-        "test": "Runs test code"}
+        "test": "Runs test code",
+        "cdb": "Creates a new Database object. Typically needs to be followed by wctd and wtd"}
 
 
 async def _test():
@@ -97,9 +99,15 @@ async def _read(database, server="main"):
 
     await connections[server][database].read_from_disk()
 
+async def _create_database(db_key, server="main"):
+    if server not in connections:
+        print("Server '%s' Not Found" % server)
+
+    await connections[server].create_database(db_key)
+
 
 instructions = {"help": _help, "conn": _connect, "lsconn": _list_connections, "get": _get, "set": _set, "ls": _list,
-                "write": _write, "read": _read, "test": _test}
+                "write": _write, "read": _read, "test": _test, "cdb": _create_database}
 
 
 async def main():

@@ -4,3 +4,4 @@ __pycache__/*
 venv/*
 databases/*
 *.conf
+/ACIJS/node_modules/*

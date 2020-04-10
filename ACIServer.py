@@ -2,7 +2,7 @@ import websockets
 import asyncio
 import json
 import traceback
-from ACI.database import Database
+from database import Database
 
 
 class Server:
@@ -12,6 +12,7 @@ class Server:
         self.dbs = {}
         self.clients = []
         self.loop = loop
+        self.rootDir = "./"
 
     def start(self):
         """
@@ -49,6 +50,9 @@ class Server:
             if cmd["cmdType"] == "rfd":
                 self.read_from_disk(cmd["db_key"])
 
+            if (cmd["cmdType"] == "cdb"):
+                self.dbs[cmd["db_key"]] = Database(cmd["db_key"], read=False, root_dir=self.rootDir)
+                
             if cmd["cmdType"] == "list_databases":
                 response = json.dumps({"cmdType": "ldResp",
                                        "msg": json.dumps(list(self.dbs[cmd["db_key"]].data.keys()))})
@@ -69,18 +73,14 @@ class Server:
 
     def load_config(self):
         try:
-            print("Opening file")
-            file = open("./server.conf")
-            config = json.loads(file.read())
-            print(config)
-            file.close()
-            print("File closed.")
-            self.port = config["port"]
-            self.ip = config["ip"]
-            self.rootDir = config["rootDir"]
-            for db in config["dbs"]:
+            self.read_from_disk("config")
+            self.port = self.dbs["config"].get("port")
+            self.ip = self.dbs["config"].get("ip")
+            self.rootDir = self.dbs["config"].get("rootDir")
+            for db in self.dbs["config"].get("dbs"):
                 self.read_from_disk(db)
             print("Config read complete")
         except Exception:
             traceback.print_exc()
             print("Unable to read config. Please initialize databases manually.")
+

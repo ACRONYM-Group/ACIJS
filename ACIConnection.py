@@ -1,9 +1,10 @@
 import asyncio
 import websockets
 import json
+import time
 from queue import SimpleQueue
 
-from ACI.utils import allow_sync
+from utils import allow_sync
 
 
 connections = {}
@@ -110,7 +111,6 @@ class DatabaseInterface:
 
     async def _get_value(self, key):
         print("Hi, I am running now!")
-        print(self.conn.ws)
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
         response = await self.conn.wait_for_response("get_val", key, self.db_key)
         return response
@@ -211,8 +211,7 @@ class Connection:
         async with websockets.connect(uri) as websocket:
             # print(websocket)
             self.ws = websocket
-            print("Websocket created")
-            print(self.ws)
+            time.sleep(0.25)
             while True:
                 consumer_task = asyncio.ensure_future(_recv_handler(self.ws, uri, responses))
 
@@ -234,3 +233,6 @@ class Connection:
         if key not in self.interfaces:
             self.interfaces[key] = self._get_interface(key)
         return self.interfaces[key]
+
+    async def create_database(self, db_key):
+        await self.ws.send(json.dumps({"cmdType": "cdb", "db_key": db_key}))

@@ -33,7 +33,7 @@ class Item:
 
     def read_from_disk(self, read_db):
         try:
-            filename = self.rootDir + "databases/%s/%s.item" % (read_db, self.key)
+            filename = self.root_dir + "databases/%s/%s.item" % (read_db, self.key)
             with open(filename, 'r') as file:
                 print("Reading", filename)
                 data = json.loads(file.read())
@@ -42,7 +42,7 @@ class Item:
         except Exception:
             print("WARNING")
             
-            print("-Unable to read " + str(self.rootDir + "/databases/" + read_db + "/" + self.key + ".item"))
+            print("-Unable to read " + str(self.root_dir + "/databases/" + read_db + "/" + self.key + ".item"))
 
 
 class Database:
@@ -84,11 +84,11 @@ class Database:
             val.write_to_disk(self.name)
             item_keys.append(val.key)
 
-        with open(self.rootDir + "databases/%s/%s.database" % (self.name, self.name), "w") as file:
+        with open(self.root_dir + "databases/%s/%s.database" % (self.name, self.name), "w") as file:
             file.write(json.dumps([self.name, item_keys]))
 
     def read_from_disk(self):
-        filename = self.rootDir + "databases/%s/%s.database" % (self.name, self.name)
+        filename = self.root_dir + "databases/%s/%s.database" % (self.name, self.name)
         with open(filename, 'r') as file:
             print(filename)
             db_data = json.loads(file.read())
