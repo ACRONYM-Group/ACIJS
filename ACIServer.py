@@ -2,7 +2,11 @@ import websockets
 import asyncio
 import json
 import traceback
-from database import Database
+
+try:
+    from database import Database
+except Exception:
+    from ACI.database import Database
 
 
 class Server:

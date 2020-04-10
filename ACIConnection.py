@@ -4,7 +4,10 @@ import json
 import time
 from queue import SimpleQueue
 
-from utils import allow_sync
+try:
+    from utils import allow_sync
+except Exception:
+    from ACI.utils import allow_sync
 
 
 connections = {}

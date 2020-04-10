@@ -2,10 +2,13 @@ import threading
 import asyncio
 import sys
 
-from ACIConnection import *
-from ACIServer import *
-from errors import *
-from database import *
+try:
+    from ACIConnection import *
+    from ACIServer import *
+    from errors import *
+    from database import *
+except Exception:
+    print("__init__ was probably loaded, skipping imports")
 
 
 def create(aci_class, port=8765, ip="127.0.0.1", name="main"):
