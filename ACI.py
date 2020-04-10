@@ -7,6 +7,7 @@ try:
     from ACIServer import *
     from errors import *
     from database import *
+    Client = Connection
 except Exception:
     print("__init__ was probably loaded, skipping imports")
 
