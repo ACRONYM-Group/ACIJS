@@ -1,4 +1,13 @@
-const WebSocket = require('isomorphic-ws')
+runningInNode = false;
+if (typeof window === 'undefined') {
+    runningInNode = true;
+} else {
+    runningInNode = false;
+}
+
+if (runningInNode) {
+    const WebSocket = require('isomorphic-ws')
+}
 
 class connection {
     constructor(ip, port, connectedCallBack, messageCallback) {
@@ -45,4 +54,8 @@ class connection {
     }
 }
 
-exports.connection = connection;
+if (runningInNode) {
+    exports.connection = connection;
+}
+
+console.log("ACI Loaded");
