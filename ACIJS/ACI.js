@@ -52,6 +52,10 @@ class connection {
     setRequest(key, db_key, val, conn) {
         this.websocket.send(JSON.stringify({"cmdType":"set_val", "key":key, "db_key":db_key, "val":val}));
     }
+
+    authenticate(id_token) {
+        this.websocket.send(JSON.stringify({"cmdType":"g_auth", "id_token":id_token}));
+    }
 }
 
 if (runningInNode) {
