@@ -20,7 +20,7 @@ class connection {
 
     start() {
         console.log("Starting");
-        this.websocket = new WebSocket('ws://' + this.ip + ':' + this.port, {});
+        this.websocket = new WebSocket('ws://' + this.ip + ':' + this.port);
         this.websocket.connectionReference = this;
 
         this.websocket.onopen = this.onOpenHandler
