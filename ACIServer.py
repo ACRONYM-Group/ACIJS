@@ -67,10 +67,11 @@ class Server:
 
             if cmd["cmdType"] == "g_auth":
                 try:
-                    print(cmd)
                     token = cmd["id_token"]
+                    print("Got Token")
                     # Specify the CLIENT_ID of the app that accesses the backend:
                     idinfo = id_token.verify_oauth2_token(token, requests.Request(), "943805128881-r72fqhk9aarnmk2oc0ue92kj5ghjtbbt")
+                    print("Attempted to Verify Token, response:")
                     print(idinfo)
 
                     # Or, if multiple clients access the backend server:
