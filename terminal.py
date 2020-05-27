@@ -14,7 +14,8 @@ usages = {"help": "help",
           "write": "write [database] [server]",
           "read": "read [database] [server]",
           "test": "test",
-          "cdb": "cdb [name]"}
+          "cdb": "cdb [name]",
+          "auth":"auth [id] [token]"}
 info = {"help": "Displays help information",
         "conn": "Connects to a new server defaults to [main] 127.0.0.1:8765",
         "lsconn": "Lists all of the currently open connections",
@@ -25,7 +26,8 @@ info = {"help": "Displays help information",
         "write": "Writes a database to disk",
         "read": "Reads a database from disk",
         "test": "Runs test code",
-        "cdb": "Creates a new Database object. Typically needs to be followed by wctd and wtd"}
+        "cdb": "Creates a new Database object. Typically needs to be followed by wctd and wtd",
+        "auth":"Authenticates to the ACI Server using the a_auth flow."}
 
 
 async def _test():
@@ -61,7 +63,6 @@ async def _get(key, database, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    print("Calling")
     print("%s:%s[%s] = %s" % (server, database, key, await connections[server][database][key]))
 
 
@@ -105,9 +106,12 @@ async def _create_database(db_key, server="main"):
 
     await connections[server].create_database(db_key)
 
+async def _authenticate(id, token, server="main"):
+    print(await connections[server].authenticate(id, token))
+
 
 instructions = {"help": _help, "conn": _connect, "lsconn": _list_connections, "get": _get, "set": _set, "ls": _list,
-                "write": _write, "read": _read, "test": _test, "cdb": _create_database}
+                "write": _write, "read": _read, "test": _test, "cdb": _create_database, "auth":_authenticate}
 
 
 async def main():

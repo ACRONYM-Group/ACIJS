@@ -36,6 +36,10 @@ async def _recv_handler(websocket, _, responses):
         value = json.dumps(["ld", cmd["msg"]])
         responses.put(value)
 
+    if cmd["cmdType"] == "a_auth_response":
+        value = json.dumps(["auth_msg", cmd["msg"]])
+        responses.put(value)
+
 
 class ContextualDatabaseInterface:
     def __init__(self, interface):
@@ -113,7 +117,6 @@ class DatabaseInterface:
         return json.loads(await self.conn.wait_for_response("ld", None, self.db_key))
 
     async def _get_value(self, key):
-        print("Hi, I am running now!")
         await self.conn.ws.send(json.dumps({"cmdType": "get_val", "key": key, "db_key": self.db_key}))
         response = await self.conn.wait_for_response("get_val", key, self.db_key)
         return response
@@ -185,6 +188,8 @@ class Connection:
                     return cmd[3]
                 elif cmd[0] == "ld":
                     return cmd[1]
+                elif cmd[0] == "auth_msg":
+                    return cmd[1]
 
     async def _create(self, port, ip, loop, responses):
         """
@@ -239,3 +244,7 @@ class Connection:
 
     async def create_database(self, db_key):
         await self.ws.send(json.dumps({"cmdType": "cdb", "db_key": db_key}))
+
+    async def authenticate(self, id, token):
+        await self.ws.send(json.dumps({"cmdType":"a_auth", "id":id, "token":token}))
+        return await self.wait_for_response("auth_msg", None, None)

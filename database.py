@@ -9,14 +9,62 @@ class Item:
         self.owner = owner
         self.subs = []
         self.root_dir = root_dir
+        self.permissions = {}
         
         if read:
             self.read_from_disk(read_db)
     
-    def get_val(self):
-        return self.value
+    def get_val(self, user):
+        hasPermission = False
+        print(self.permissions["read"])
+        if user == "backend":
+            hasPermission = True
+        elif self.permissions["read"] != None:
+            print(user)
+            for userPermission in self.permissions["read"]:
+                print(userPermission)
+                if user == "NotAuthed":
+                    print("User is Not Authed")
+                    if userPermission[0] == "a_user" and userPermission[1] == "any":
+                        print("NotAuthed, but value is public")
+                        hasPermission = True
+                else:
+                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"]:
+                        hasPermission = True
+                    if userPermission[0] == user["user_type"] and userPermission[1] == "any":
+                        hasPermission = True
+        
 
-    def set_val(self, value):
+        print(hasPermission)
+        if hasPermission == True:
+            print("returning Value")
+            return self.value
+        else:
+            return "Access Denied: Your User ID is not listed in the item permissions table."
+
+    def set_val(self, value, user):
+        hasPermission = False
+        if user == "backend":
+            hasPermission = True
+        elif self.permissions["write"] != None:
+            print(user)
+            for userPermission in self.permissions["write"]:
+                if user == "NotAuthed":
+                    print("User is Not Authed")
+                    if userPermission[0] == "a_user" and userPermission[1] == "any":
+                        print("NotAuthed, but value is public")
+                        hasPermission = True
+                else:
+                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"]:
+                        hasPermission = True
+                    if userPermission[0] == user["user_type"] and userPermission[1] == "any":
+                        hasPermission = True
+
+        print(hasPermission)
+        if hasPermission:
+            return self.value
+        else:
+            return "Access Denied: Your User ID is not listed in the item permissions table."
         self.value = value
 
     def write_to_disk(self, database):
@@ -29,7 +77,7 @@ class Item:
                     raise
 
         with open("./databases/%s/%s.item" % (database, self.key), 'w') as file:
-            file.write(json.dumps([self.key, self.value, self.owner, self.subs]))
+            file.write(json.dumps([self.key, self.value, self.owner, self.permissions, self.subs]))
 
     def read_from_disk(self, read_db):
         try:
@@ -37,8 +85,10 @@ class Item:
             with open(filename, 'r') as file:
                 print("Reading", filename)
                 data = json.loads(file.read())
+                if len(data) == 4:
+                    data.insert(3, {"read":[],"write":[]})
 
-            _, self.value, self.owner, self.subs = data
+            _, self.value, self.owner,  self.permissions, self.subs = data
         except Exception:
             print("WARNING")
             
@@ -54,21 +104,21 @@ class Database:
         if read:
             self.read_from_disk()
 
-    def get(self, key):
+    def get(self, key, user):
         if key in self.data:
-            return self.data[key].get_val()
+            return self.data[key].get_val(user)
         else:
             return None
 
-    def set(self, key, value):
+    def set(self, key, value, user):
         if not (key in self.data):
             self.new_item(key, value)
-        self.data[key].set_val(value)
+        self.data[key].set_val(value, user)
 
         self.data[key].write_to_disk(self.name)
 
     def new_item(self, key, value, owner="self"):
-        self.data[key] = Item(key, value, owner, root_dir=self.root_dir)
+        self.data[key] = Item(key, value, owner, root_dir=self.root_dir, permissions={"read":[],"write":[]})
 
     def write_to_disk(self):
         filename = "./databases/" + self.name + "/"

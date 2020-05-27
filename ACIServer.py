@@ -3,6 +3,7 @@ import asyncio
 import json
 import traceback
 import requests
+import random
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
@@ -10,6 +11,13 @@ try:
     from database import Database
 except Exception:
     from ACI.database import Database
+
+class ServerClient:
+    def __init__(self, clientID, user_type, clientWebsocket, user_id):
+        self.id = clientID
+        self.websocket = clientWebsocket
+        self.user_type = user_type
+        self.user_id = user_id
 
 
 class Server:
@@ -26,7 +34,6 @@ class Server:
         Starts the server running
         :return:
         """
-
         asyncio.set_event_loop(self.loop)
         self.load_config()
         start_server = websockets.serve(self.connection_handler, self.ip, self.port)
@@ -35,19 +42,31 @@ class Server:
         asyncio.get_event_loop().run_forever()
 
     async def connection_handler(self, websocket, path):
-        self.clients.append(websocket)
-
+        websocket.user = "NotAuthed"
         while True:
             raw_cmd = await websocket.recv()
             cmd = json.loads(raw_cmd)
             response = ""
 
+            clientIndex = "NotFound"
+            for index, Client in enumerate(self.clients):
+                if Client.user_type + Client.user_id == websocket.user:
+                    clientIndex = index
+
+            if clientIndex != "NotFound":
+                user = self.clients[clientIndex]
+            else:
+                user = "NotAuthed"
+
+
             if cmd["cmdType"] == "get_val":
-                response = self.get_response_packet(cmd["key"], cmd["db_key"])
+                print(">>>>>>>>>>")
+                print(websocket.user)
+                response = self.get_response_packet(cmd["key"], cmd["db_key"], websocket.user)
                 await websocket.send(response)
             
             if cmd["cmdType"] == "set_val":
-                self.dbs[cmd["db_key"]].set(cmd["key"], cmd["val"])
+                self.dbs[cmd["db_key"]].set(cmd["key"], cmd["val"], websocket.user)
                 response = json.dumps({"cmdType": "setResp", "msg": "Value Set."})
                 await websocket.send(response)
 
@@ -68,11 +87,8 @@ class Server:
             if cmd["cmdType"] == "g_auth":
                 try:
                     token = cmd["id_token"]
-                    print("Got Token")
                     # Specify the CLIENT_ID of the app that accesses the backend:
                     idinfo = id_token.verify_oauth2_token(token, requests.Request(), "943805128881-r72fqhk9aarnmk2oc0ue92kj5ghjtbbt")
-                    print("Attempted to Verify Token, response:")
-                    print(idinfo)
 
                     # Or, if multiple clients access the backend server:
                     # idinfo = id_token.verify_oauth2_token(token, requests.Request())
@@ -89,14 +105,33 @@ class Server:
 
                     # ID token is valid. Get the user's Google Account ID from the decoded token.
                     userid = idinfo['sub']
-                    print("User Authentication Complete")
-                    print(idinfo)
+                    print(userid["email"] + " Authentication Complete")
+                    self.clients.append(ServerClient(token, "g_user", websocket, userid["email"]))
+                    websocket.user = "g_user" + userid["email"]
                 except ValueError:
                     # Invalid token
                     pass
 
-    def get_response_packet(self, key, db_key):
-        return json.dumps({"cmdType": "getResp", "key": key, "val": self.dbs[db_key].get(key), "db_key": db_key})
+            if cmd["cmdType"] == "a_auth":
+                print(cmd["id"])
+                print(cmd["token"])
+                a_users = self.dbs["config"].get("a_users", "backend")
+                if cmd["id"] in a_users:
+                    if cmd["token"] in a_users[cmd["id"]]["tokens"]:
+                        websocket.user = {"user_type":"a_user", "user_id":cmd["id"]}
+                        response = json.dumps({"cmdType": "a_auth_response", "msg": "success"})
+                        print("========")
+                        print(websocket.user)
+                        await websocket.send(response)
+                    else:
+                        response = json.dumps({"cmdType": "a_auth_response", "msg": "Failed, token incorrect"})
+                        await websocket.send(response)
+                else:
+                    response = json.dumps({"cmdType": "a_auth_response", "msg": "Failed, a_user not found"})
+                    await websocket.send(response)
+
+    def get_response_packet(self, key, db_key, user):
+        return json.dumps({"cmdType": "getResp", "key": key, "val": self.dbs[db_key].get(key, user), "db_key": db_key})
 
     def write_to_disk(self, db_key):
         if db_key != "":
@@ -111,10 +146,10 @@ class Server:
     def load_config(self):
         try:
             self.read_from_disk("config")
-            self.port = self.dbs["config"].get("port")
-            self.ip = self.dbs["config"].get("ip")
-            self.rootDir = self.dbs["config"].get("rootDir")
-            for db in self.dbs["config"].get("dbs"):
+            self.port = self.dbs["config"].get("port", "backend")
+            self.ip = self.dbs["config"].get("ip", "backend")
+            self.rootDir = self.dbs["config"].get("rootDir", "backend")
+            for db in self.dbs["config"].get("dbs", "backend"):
                 self.read_from_disk(db)
             print("Config read complete")
         except Exception:
