@@ -3,6 +3,8 @@ import asyncio
 import json
 import traceback
 import requests
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 try:
     from database import Database
@@ -66,8 +68,10 @@ class Server:
             if cmd["cmdType"] == "g_auth":
                 try:
                     token = cmd["id_token"]
+                    print("Got Token")
                     # Specify the CLIENT_ID of the app that accesses the backend:
                     idinfo = id_token.verify_oauth2_token(token, requests.Request(), "943805128881-r72fqhk9aarnmk2oc0ue92kj5ghjtbbt")
+                    print("Attempted to Verify Token, response:")
                     print(idinfo)
 
                     # Or, if multiple clients access the backend server:
@@ -79,11 +83,14 @@ class Server:
                         raise ValueError('Wrong issuer.')
 
                     # If auth request is from a G Suite domain:
+                    GSUITE_DOMAIN_NAME = "scienceandpizza.com"
                     if idinfo['hd'] != GSUITE_DOMAIN_NAME:
                         raise ValueError('Wrong hosted domain.')
 
                     # ID token is valid. Get the user's Google Account ID from the decoded token.
                     userid = idinfo['sub']
+                    print("User Authentication Complete")
+                    print(idinfo)
                 except ValueError:
                     # Invalid token
                     pass
