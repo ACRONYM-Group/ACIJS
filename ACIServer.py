@@ -67,7 +67,10 @@ class Server:
             
             if cmd["cmdType"] == "set_val":
                 newValue = self.dbs[cmd["db_key"]].set(cmd["key"], cmd["val"], websocket.user)
-                response = json.dumps({"cmdType": "setResp", "msg": cmd["db_key"] + "[" + cmd["key"] + "] = " + newValue})
+                print(str(cmd["db_key"]))
+                print(str(cmd["key"]))
+                print(str(newValue))
+                response = json.dumps({"cmdType": "setResp", "msg": str(cmd["db_key"]) + "[" + str(cmd["key"]) + "] = " + str(newValue)})
                 await websocket.send(response)
 
             if cmd["cmdType"] == "wtd":
