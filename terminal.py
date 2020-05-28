@@ -70,10 +70,10 @@ async def _set(key, database, value, server="main"):
     if server not in connections:
         print("Server '%s' Not Found" % server)
 
-    
+
     async with connections[server][database] as interface:
         interface[key] = value
-    print("%s:%s[%s] = %s" % (server, database, key, value))
+    #print("%s:%s[%s] = %s" % (server, database, key, value))
 
 
 async def _list(database, server="main"):

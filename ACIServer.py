@@ -60,16 +60,11 @@ class Server:
 
 
             if cmd["cmdType"] == "get_val":
-                print(">>>>>>>>>>")
-                print(websocket.user)
                 response = self.get_response_packet(cmd["key"], cmd["db_key"], websocket.user)
                 await websocket.send(response)
             
             if cmd["cmdType"] == "set_val":
                 newValue = self.dbs[cmd["db_key"]].set(cmd["key"], cmd["val"], websocket.user)
-                print(str(cmd["db_key"]))
-                print(str(cmd["key"]))
-                print(str(newValue))
                 response = json.dumps({"cmdType": "setResp", "msg": str(cmd["db_key"]) + "[" + str(cmd["key"]) + "] = " + str(newValue)})
                 await websocket.send(response)
 
@@ -116,15 +111,11 @@ class Server:
                     pass
 
             if cmd["cmdType"] == "a_auth":
-                print(cmd["id"])
-                print(cmd["token"])
                 a_users = self.dbs["config"].get("a_users", "backend")
                 if cmd["id"] in a_users:
                     if cmd["token"] in a_users[cmd["id"]]["tokens"]:
                         websocket.user = {"user_type":"a_user", "user_id":cmd["id"]}
                         response = json.dumps({"cmdType": "a_auth_response", "msg": "success"})
-                        print("========")
-                        print(websocket.user)
                         await websocket.send(response)
                     else:
                         response = json.dumps({"cmdType": "a_auth_response", "msg": "Failed, token incorrect"})
