@@ -106,7 +106,7 @@ class Server:
                     userid = idinfo['sub']
                     print(idinfo["email"] + " Authentication Complete")
                     self.clients.append(ServerClient(token, "g_user", websocket, idinfo["email"]))
-                    websocket.user = "g_user" + idinfo["email"]
+                    websocket.user = {"user_type":"g_user", "user_id":idinfo["email"]}
                 except ValueError as e:
                     tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
                     print(tb_str)
