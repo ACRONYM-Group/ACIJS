@@ -107,7 +107,9 @@ class Server:
                     print(userid["email"] + " Authentication Complete")
                     self.clients.append(ServerClient(token, "g_user", websocket, userid["email"]))
                     websocket.user = "g_user" + userid["email"]
-                except ValueError:
+                except ValueError as e:
+                    tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+                    print(tb_str)
                     print("Invalid Token")
                     print(cmd["id_token"])
                     # Invalid token
