@@ -105,8 +105,8 @@ class Server:
                     # ID token is valid. Get the user's Google Account ID from the decoded token.
                     userid = idinfo['sub']
                     print(idinfo["email"] + " Authentication Complete")
-                    self.clients.append(ServerClient(token, "g_user", websocket, ifinfo["email"]))
-                    websocket.user = "g_user" + ifinfo["email"]
+                    self.clients.append(ServerClient(token, "g_user", websocket, idinfo["email"]))
+                    websocket.user = "g_user" + idinfo["email"]
                 except ValueError as e:
                     tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
                     print(tb_str)
