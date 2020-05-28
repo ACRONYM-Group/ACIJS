@@ -83,6 +83,7 @@ class Server:
                 await websocket.send(response)
 
             if cmd["cmdType"] == "g_auth":
+                print("Starting Google Auth")
                 try:
                     token = cmd["id_token"]
                     # Specify the CLIENT_ID of the app that accesses the backend:
@@ -107,6 +108,7 @@ class Server:
                     self.clients.append(ServerClient(token, "g_user", websocket, userid["email"]))
                     websocket.user = "g_user" + userid["email"]
                 except ValueError:
+                    print("Invalid Token")
                     # Invalid token
                     pass
 
