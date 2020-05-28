@@ -87,7 +87,7 @@ class Server:
                 try:
                     token = cmd["id_token"]
                     # Specify the CLIENT_ID of the app that accesses the backend:
-                    idinfo = id_token.verify_oauth2_token(token, requests.Request(), "943805128881-r72fqhk9aarnmk2oc0ue92kj5ghjtbbt")
+                    idinfo = id_token.verify_oauth2_token(token, requests.Request())
 
                     # Or, if multiple clients access the backend server:
                     # idinfo = id_token.verify_oauth2_token(token, requests.Request())
