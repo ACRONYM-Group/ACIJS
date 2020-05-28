@@ -4,9 +4,9 @@ if (typeof window === 'undefined') {
 } else {
     runningInNode = false;
 }
-
 if (runningInNode) {
-    const WebSocket = require('isomorphic-ws')
+    console.log("Running in Node")
+    var WebSocket = require('isomorphic-ws');
 }
 
 class connection {
@@ -19,6 +19,7 @@ class connection {
     }
 
     start() {
+
         console.log("Starting");
         this.websocket = new WebSocket('ws://' + this.ip + ':' + this.port);
         this.websocket.connectionReference = this;
@@ -26,12 +27,17 @@ class connection {
         this.websocket.onopen = this.onOpenHandler
 
         this.websocket.onmessage = this.onMessageHandler
+        this.websocket.onerror = this.onConnectionErrorHandler
     }
 
     onOpenHandler(event) {
         console.log('connected to ' + event.target.connectionReference.ip);
         event.target.connectionReference.connected = true;
         event.target.connectionReference.connectedCallBack();
+    }
+
+    onConnectionErrorHandler(event) {
+        console.log("Error connecting to ACI.");
     }
 
     onMessageHandler(event) {
