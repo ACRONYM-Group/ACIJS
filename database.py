@@ -29,9 +29,9 @@ class Item:
                         print("NotAuthed, but value is public")
                         hasPermission = True
                 else:
-                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"]:
+                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"] or userPermission[1] == "authed":
                         hasPermission = True
-                    if userPermission[0] == user["user_type"] and userPermission[1] == "any":
+                    if userPermission[0] == user["user_type"] and userPermission[1] == "any" or userPermission[1] == "authed":
                         hasPermission = True
         
 
@@ -55,9 +55,9 @@ class Item:
                         print("NotAuthed, but value is public")
                         hasPermission = True
                 else:
-                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"]:
+                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"] or userPermission[1] == "authed":
                         hasPermission = True
-                    if userPermission[0] == user["user_type"] and userPermission[1] == "any":
+                    if userPermission[0] == user["user_type"] and userPermission[1] == "any" or userPermission[1] == "authed":
                         hasPermission = True
 
         print(hasPermission)

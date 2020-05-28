@@ -124,6 +124,8 @@ class DatabaseInterface:
     @allow_sync
     async def set_value(self, key, val):
         await self.conn.ws.send(json.dumps({"cmdType": "set_val", "key": key, "db_key": self.db_key, "val": val}))
+        response = await self.conn.wait_for_response("set_val")
+        return response
 
     @allow_sync
     async def get_value(self, key):
@@ -170,7 +172,7 @@ class Connection:
     async def start(self):
         await self._create(self.port, self.ip, self.loop, self.responses)
 
-    async def wait_for_response(self, _, key, db_key):
+    async def wait_for_response(self, _, key="none", db_key="none"):
         """
         Waits for a response
         :param _:
@@ -182,10 +184,12 @@ class Connection:
             if not self.responses.empty():
                 value = self.responses.get_nowait()
                 cmd = json.loads(value)
+                print(cmd)
                 if tuple(cmd)[:3] == ("get_val", key, db_key):
                     return cmd[3]
-                elif tuple(cmd)[:3] == ("set_val", key, db_key):
-                    return cmd[3]
+                elif cmd[0] == ("set_val"):
+                    print("test")
+                    return cmd[1]
                 elif cmd[0] == "ld":
                     return cmd[1]
                 elif cmd[0] == "auth_msg":
