@@ -16,17 +16,12 @@ class Item:
     
     def get_val(self, user):
         hasPermission = False
-        print(self.permissions["read"])
         if user == "backend":
             hasPermission = True
         elif self.permissions["read"] != None:
-            print(user)
             for userPermission in self.permissions["read"]:
-                print(userPermission)
                 if user == "NotAuthed":
-                    print("User is Not Authed")
                     if userPermission[0] == "a_user" and userPermission[1] == "any":
-                        print("NotAuthed, but value is public")
                         hasPermission = True
                 else:
                     if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"] or userPermission[1] == "authed":
@@ -35,9 +30,7 @@ class Item:
                         hasPermission = True
         
 
-        print(hasPermission)
         if hasPermission == True:
-            print("returning Value")
             return self.value
         else:
             return "Access Denied: Your User ID is not listed in the item permissions table."
@@ -47,12 +40,9 @@ class Item:
         if user == "backend":
             hasPermission = True
         elif self.permissions["write"] != None:
-            print(user)
             for userPermission in self.permissions["write"]:
                 if user == "NotAuthed":
-                    print("User is Not Authed")
                     if userPermission[0] == "a_user" and userPermission[1] == "any":
-                        print("NotAuthed, but value is public")
                         hasPermission = True
                 else:
                     if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"] or userPermission[1] == "authed":
@@ -60,7 +50,6 @@ class Item:
                     if userPermission[0] == user["user_type"] and userPermission[1] == "any" or userPermission[1] == "authed":
                         hasPermission = True
 
-        print(hasPermission)
         if hasPermission:
             return self.value
         else:
