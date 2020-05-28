@@ -109,6 +109,7 @@ class Server:
                     websocket.user = "g_user" + userid["email"]
                 except ValueError:
                     print("Invalid Token")
+                    print(cmd["id_token"])
                     # Invalid token
                     pass
 
