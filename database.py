@@ -113,9 +113,11 @@ class Database:
     def set(self, key, value, user):
         if not (key in self.data):
             self.new_item(key, value)
-        self.data[key].set_val(value, user)
+        response = self.data[key].set_val(value, user)
 
         self.data[key].write_to_disk(self.name)
+
+        return response
 
     def new_item(self, key, value, owner="self"):
         self.data[key] = Item(key, value, owner, root_dir=self.root_dir, permissions={"read":[],"write":[]})
