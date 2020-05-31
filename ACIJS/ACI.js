@@ -62,6 +62,10 @@ class connection {
     authenticate(id_token) {
         this.websocket.send(JSON.stringify({"cmdType":"g_auth", "id_token":id_token}));
     }
+
+    a_authenticate(id, token) {
+        this.websocket.send(JSON.stringify({"cmdType":"a_auth", "id":id, "token":token}));
+    }
 }
 
 if (runningInNode) {
