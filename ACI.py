@@ -9,7 +9,6 @@ try:
     from database import *
     Client = Connection
 except Exception as e:
-    raise Exception("foo occurred").with_traceback(e)
     print("__init__ was probably loaded, skipping imports")
 
 
