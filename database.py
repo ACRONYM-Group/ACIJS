@@ -39,7 +39,7 @@ class Item:
         hasPermission = False
         if user == "backend":
             hasPermission = True
-        elif self.permissions["write"] != None:
+        elif "write" in self.permissions:
             for userPermission in self.permissions["write"]:
                 if user == "NotAuthed":
                     if userPermission[0] == "a_user" and userPermission[1] == "any":
