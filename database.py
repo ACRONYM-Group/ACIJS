@@ -51,10 +51,10 @@ class Item:
                         hasPermission = True
 
         if hasPermission:
+            self.value = value
             return self.value
         else:
             return "Access Denied: Your User ID is not listed in the item permissions table."
-        self.value = value
 
     def write_to_disk(self, database):
         filename = "./databases/%s/" % database
