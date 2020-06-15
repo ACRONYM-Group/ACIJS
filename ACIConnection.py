@@ -248,6 +248,7 @@ class Connection:
     async def create_database(self, db_key):
         await self.ws.send(json.dumps({"cmdType": "cdb", "db_key": db_key}))
 
+    @allow_sync
     async def authenticate(self, id, token):
         await self.ws.send(json.dumps({"cmdType":"a_auth", "id":id, "token":token}))
         return await self.wait_for_response("auth_msg", None, None)
