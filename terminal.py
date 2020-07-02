@@ -15,7 +15,12 @@ usages = {"help": "help",
           "read": "read [database] [server]",
           "test": "test",
           "cdb": "cdb [name]",
-          "auth":"auth [id] [token]"}
+          "auth":"auth [id] [token]",
+          "get_ind":"get_ind [key] [database] [index]",
+          "set_ind":"set_ind [key] [database] [index] [value]",
+          "app_ind":"app_ind [key] [database] [value]",
+          "get_len_ind":"get_len_ind [key] [database]",
+          "get_rec_ind":"get_rec_ind [key] [database] [num]"}
 info = {"help": "Displays help information",
         "conn": "Connects to a new server defaults to [main] 127.0.0.1:8765",
         "lsconn": "Lists all of the currently open connections",
@@ -27,7 +32,12 @@ info = {"help": "Displays help information",
         "read": "Reads a database from disk",
         "test": "Runs test code",
         "cdb": "Creates a new Database object. Typically needs to be followed by wctd and wtd",
-        "auth":"Authenticates to the ACI Server using the a_auth flow."}
+        "auth":"Authenticates to the ACI Server using the a_auth flow.",
+        "get_ind":"Gets a value stored at an index in a table",
+        "set_ind":"Sets a value at an index in a table",
+        "app_ind":"Appends a value to the end of a table",
+        "get_len_ind":"Gets the length of a table",
+        "get_rec_ind":"Returns given number of recent indexs from a table"}
 
 
 async def _test():
@@ -110,9 +120,25 @@ async def _create_database(db_key, server="main"):
 async def _authenticate(id, token, server="main"):
     print(await connections[server].authenticate(id, token))
 
+async def _get_index(key, db_key, index, server="main"):
+    print(await connections[server][db_key].get_index(key, index))
+
+async def _set_index(key, db_key, index, value, server="main"):
+    print(await connections[server][db_key].set_index(key, index, value))
+
+async def _append_index(key, db_key, value, server="main"):
+    print(await connections[server][db_key].append_index(key, value))
+
+async def _get_len_index(key, db_key, server="main"):
+    print(await connections[server][db_key].get_len_index(key))
+
+async def _get_recent_index(key, db_key, num, server="main"):
+    print(await connections[server][db_key].get_recent_index(key, num))
+
 
 instructions = {"help": _help, "conn": _connect, "lsconn": _list_connections, "get": _get, "set": _set, "ls": _list,
-                "write": _write, "read": _read, "test": _test, "cdb": _create_database, "auth":_authenticate}
+                "write": _write, "read": _read, "test": _test, "cdb": _create_database, "auth":_authenticate, "get_ind":_get_index,
+                "set_ind":_set_index, "app_ind":_append_index, "get_len_ind":_get_len_index, "get_rec_ind":_get_recent_index}
 
 
 async def main():

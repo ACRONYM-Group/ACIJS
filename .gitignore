@@ -3,5 +3,6 @@
 __pycache__/*
 venv/*
 databases/*
+databases - backup/*
 *.conf
 /ACIJS/node_modules/*

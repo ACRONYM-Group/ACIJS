@@ -10,6 +10,8 @@ except Exception:
     from ACI.utils import allow_sync
 
 
+ACIVersion = "2020.07.01.1"
+
 connections = {}
 
 
@@ -23,6 +25,7 @@ async def _recv_handler(websocket, _, responses):
     :return:
     """
     cmd = json.loads(await websocket.recv())
+    print(cmd)
 
     if cmd["cmdType"] == "getResp":
         value = json.dumps(["get_val", cmd["key"], cmd["db_key"], cmd["val"]])
@@ -56,8 +59,8 @@ async def _recv_handler(websocket, _, responses):
         value = json.dumps(["get_len_indexResp", cmd["msg"]])
         responses.put(value)
 
-    if cmd["cmdType"] == "get_recent_Resp":
-        value = json.dumps(["get_recent_Resp", cmd["msg"]])
+    if cmd["cmdType"] == "get_recent_indexResp":
+        value = json.dumps(["get_recent_indexResp", cmd["msg"]])
         responses.put(value)
         
 
@@ -153,31 +156,31 @@ class DatabaseInterface:
         return await self._get_value(key)
 
     @allow_sync
-    async def get_index(self, key, db_key, index):
+    async def get_index(self, key, index):
         await self.conn.ws.send(json.dumps({"cmdType": "get_index", "key": key, "db_key": self.db_key, "index":index}))
         response = await self.conn.wait_for_response("get_indexResp", key, self.db_key)
         return response
 
     @allow_sync
-    async def set_index(self, key, db_key, index, value):
+    async def set_index(self, key, index, value):
         await self.conn.ws.send(json.dumps({"cmdType": "set_index", "key": key, "db_key": self.db_key, "index":index, "value": value}))
         response = await self.conn.wait_for_response("set_indexResp", key, self.db_key)
         return response
 
     @allow_sync
-    async def append_index(self, key, db_key, value):
+    async def append_index(self, key, value):
         await self.conn.ws.send(json.dumps({"cmdType": "append_index", "key": key, "db_key": self.db_key, "value": value}))
         response = await self.conn.wait_for_response("app_indexResp", key, self.db_key)
         return response
 
     @allow_sync
-    async def get_len_index(self, key, db_key):
+    async def get_len_index(self, key):
         await self.conn.ws.send(json.dumps({"cmdType": "get_len_index", "key": key, "db_key": self.db_key}))
         response = await self.conn.wait_for_response("get_len_indexResp", key, self.db_key)
         return response
 
     @allow_sync
-    async def get_recent_index(self, key, db_key, num):
+    async def get_recent_index(self, key, num):
         await self.conn.ws.send(json.dumps({"cmdType": "get_recent_index", "key": key, "db_key": self.db_key, "num":num}))
         response = await self.conn.wait_for_response("get_recent_indexResp", key, self.db_key)
         return response   
@@ -235,6 +238,7 @@ class Connection:
             if not self.responses.empty():
                 value = self.responses.get_nowait()
                 cmd = json.loads(value)
+                print(cmd)
                 if tuple(cmd)[:3] == ("get_val", key, db_key):
                     return cmd[3]
                 elif cmd[0] == ("set_val"):
@@ -244,15 +248,15 @@ class Connection:
                     return cmd[1]
                 elif cmd[0] == "auth_msg":
                     return cmd[1]
-                elif cmd[0] == "get_indexResp"
+                elif cmd[0] == "get_indexResp":
                     return cmd[1]
-                elif cmd[0] == "set_indexResp"
+                elif cmd[0] == "set_indexResp":
                     return cmd[1]
-                elif cmd[0] == "app_indexResp"
+                elif cmd[0] == "app_indexResp":
                     return cmd[1]
-                elif cmd[0] == "get_len_indexResp"
+                elif cmd[0] == "get_len_indexResp":
                     return cmd[1]
-                elif cmd[0] == "get_recent_indexResp"
+                elif cmd[0] == "get_recent_indexResp":
                     return cmd[1]
 
     async def _create(self, port, ip, loop, responses):

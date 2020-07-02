@@ -1,6 +1,9 @@
 import json
 import os
+import traceback
 
+
+ACIVersion = "2020.07.01.1"
 
 class Item:
     def __init__(self, key, value, owner, read=False, root_dir="./", read_db="", type="string"):
@@ -12,6 +15,7 @@ class Item:
         self.permissions = {}
         self.type = type
         self.ver = ACIVersion
+        self.maxLen = 100000
 
         if read:
             self.read_from_disk(read_db)
@@ -35,17 +39,22 @@ class Item:
 
     def get_index(self, index, user):
         if self.authenticate(user, "read"):
+            try:
+                index = json.loads(index)
+            except:
+                pass
             if not isinstance(index, list):
                 indexs = [index]
             else:
-                index = index
+                indexs = index
 
             table = self.get_val(user)
             if isinstance(table, list):
                 values = {}
                 for x in range(len(indexs)):
-                    values[indexs[x]] = table[indexs[x]]
-                    return values
+                    values[int(indexs[x])] = table[int(indexs[x])]
+                    
+                return values
             else:
                 return "ERROR - " + table
         else:
@@ -54,18 +63,27 @@ class Item:
     
     def set_index(self, index, value, user):
         if self.authenticate(user, "write"):
+            try:
+                index = json.loads(index)
+                value = json.loads(value)
+            except Exception as e:
+                tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+                print(tb_str)
+                return "ERROR - Failed to read command ind(ex/ices) and value(s)"
             if not isinstance(index, list):
                 indexs = [index]
-                values = {index:value}
+                values = {int(index):value}
             else:
                 indexs = index
-                values = values
+                values = value
 
             table = self.get_val(user)
             if isinstance(table, list):
-                values = {}
                 for x in range(len(indexs)):
-                    table[indexs[x]] = values[indexs[x]]
+                    if (int(indexs[x]) < len(table)):
+                        table[int(indexs[x])] = values[str(indexs[x])]
+                    else:
+                        return "ERROR - index does not exist"
 
                 self.set_val(table, user)
                 return "Success"
@@ -79,14 +97,13 @@ class Item:
             if not isinstance(value, list):
                 values = [value]
             else:
-                values = values
+                values = value
 
             table = self.get_val(user)
             if isinstance(table, list):
-                values = {}
                 for x in range(len(values)):
-                    table[len(table)] = values[x]
-
+                    table.append(values[x])
+                
                 if len(table) > self.maxLen:
                     while len(table) > self.maxLen:
                         table.pop(0)
@@ -104,12 +121,14 @@ class Item:
             return len(table)
 
     def get_recent(self, num, user):
+        num = int(num)
         if self.authenticate(user, "read"):
             table = self.get_val(user)
             values = []
-            while num > 0:
-                values.append(table[len(table)-1])
-                num -= 1
+            i = 0
+            while i < num:
+                values.append(table[len(table)-num+i])
+                i += 1
             return values
     
     def authenticate(self, user, permission):
@@ -144,7 +163,7 @@ class Item:
                 "owner" : data[2],
                 "permissions" : data[3],
                 "subs" : data[4],
-                "type" : data[5],
+                "type": "string",
                 "ver" : self.ver
             }
 
@@ -182,7 +201,7 @@ class Item:
                 self.owner = ""
             self.permissions = data["permissions"]
             if self.permissions == None:
-                self.permissions = ["read":{}, "write":{}]
+                self.permissions = {"read":[], "write":[]}
             self.subs = data["subs"]
             if self.subs == None:
                 self.subs = []
@@ -190,10 +209,14 @@ class Item:
             if self.type == None:
                 self.type = "string"
 
-        except Exception:
+        except Exception as e:
             print("WARNING")
             
             print("-Unable to read " + str(self.root_dir + "/databases/" + read_db + "/" + self.key + ".item"))
+
+            tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+            print(tb_str)
+            print(" ")
 
 
 class Database:
@@ -224,8 +247,8 @@ class Database:
     def new_item(self, key, value, owner="self"):
         self.data[key] = Item(key, value, owner, root_dir=self.root_dir, permissions={"read":[],"write":[]})
 
-    def upgrade_database(data):
-        if is isinstance(data, list):
+    def upgrade_database(self, data):
+        if isinstance(data, list):
             print("Upgrading legacy list database to current")
             new_data = {
                 "dbKey": data[0],

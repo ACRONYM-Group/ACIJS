@@ -9,8 +9,12 @@ from google.auth.transport import requests
 
 try:
     from database import Database
-except Exception:
+except Exception as e:
+    tb_str = traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)
+    print(tb_str)
     from ACI.database import Database
+
+ACIVersion = "2020.07.01.1"
 
 class ServerClient:
     def __init__(self, clientID, user_type, clientWebsocket, user_id):
@@ -85,8 +89,10 @@ class Server:
                 await websocket.send(response)
 
             if cmd["cmdType"] == "get_recent_index":
+                print("Client is requesting recent index")
                 response = json.dumps({"cmdType": "get_recent_indexResp", "msg": self.dbs[cmd["db_key"]].data[cmd["key"]].get_recent(cmd["num"], websocket.user)})
                 await websocket.send(response)
+                print("sent")
 
             if cmd["cmdType"] == "wtd":
                 self.write_to_disk(cmd["db_key"])
@@ -164,7 +170,7 @@ class Server:
 
     def load_config(self):
         try:
-            print("Loading ACI Server version " + ACIServer)
+            print("Loading ACI Server version " + ACIVersion)
             self.read_from_disk("config")
             self.port = self.dbs["config"].get("port", "backend")
             self.ip = self.dbs["config"].get("ip", "backend")
