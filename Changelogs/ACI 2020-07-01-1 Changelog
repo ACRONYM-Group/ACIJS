@@ -1,0 +1,25 @@
+ACI V2020.07.01.1 Changelog
+
+We have version numbers now!
+
+Improved ACI database and Item storage:
+    Now stored as a dictionary instead of a list
+    Server can automatically upgrade legacy databases
+
+ACI now tracks the type of data stored in each key
+Currently supports:
+    string (works the same as keys in previous versions)
+    table (array)
+
+Added Methods for interacting with tables.
+    get_index # Returns value at given index
+    set_index # Sets value of given index
+    append_index # Adds value to the end of the table
+    get_len_index # Returns the length of the table
+    get_recent_index # Returns a given number of values at the end of the table
+
+ACI now tracks its own version number
+
+Upgraded ACI Terminal to support new methods
+
+Upgraded ACI Python and JS Clients to support new methods

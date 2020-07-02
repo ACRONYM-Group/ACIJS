@@ -59,6 +59,26 @@ class connection {
         this.websocket.send(JSON.stringify({"cmdType":"set_val", "key":key, "db_key":db_key, "val":val}));
     }
 
+    get_index_request(key, db_key, index) {
+        this.websocket.send(JSON.stringify({"cmdType":"get_index", "key":key, "db_key":db_key, "index":index}));
+    }
+
+    set_index_request(key, db_key, index, value) {
+        this.websocket.send(JSON.stringify({"cmdType":"set_index", "key":key, "db_key":db_key, "index":index, "value":value}));
+    }
+
+    append_index_request(key, db_key, value) {
+        this.websocket.send(JSON.stringify({"cmdType":"append_index", "key":key, "db_key":db_key, "value":value}));
+    }
+
+    get_len_index_request(key, db_key) {
+        this.websocket.send(JSON.stringify({"cmdType":"get_len_index", "key":key, "db_key":db_key}));
+    }
+
+    get_recent_index_request(key, db_key, num) {
+        this.websocket.send(JSON.stringify({"cmdType":"get_recent_index", "key":key, "db_key":db_key, "num":num}));
+    }
+
     authenticate(id_token) {
         this.websocket.send(JSON.stringify({"cmdType":"g_auth", "id_token":id_token}));
     }

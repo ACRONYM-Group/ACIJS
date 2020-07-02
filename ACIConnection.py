@@ -40,6 +40,27 @@ async def _recv_handler(websocket, _, responses):
         value = json.dumps(["auth_msg", cmd["msg"]])
         responses.put(value)
 
+    if cmd["cmdType"] == "get_indexResp":
+        value = json.dumps(["get_indexResp", cmd["msg"]])
+        responses.put(value)
+
+    if cmd["cmdType"] == "set_indexResp":
+        value = json.dumps(["set_indexResp", cmd["msg"]])
+        responses.put(value)
+
+    if cmd["cmdType"] == "app_indexResp":
+        value = json.dumps(["app_indexResp", cmd["msg"]])
+        responses.put(value)
+
+    if cmd["cmdType"] == "get_len_indexResp":
+        value = json.dumps(["get_len_indexResp", cmd["msg"]])
+        responses.put(value)
+
+    if cmd["cmdType"] == "get_recent_Resp":
+        value = json.dumps(["get_recent_Resp", cmd["msg"]])
+        responses.put(value)
+        
+
 
 class ContextualDatabaseInterface:
     def __init__(self, interface):
@@ -131,6 +152,36 @@ class DatabaseInterface:
     async def get_value(self, key):
         return await self._get_value(key)
 
+    @allow_sync
+    async def get_index(self, key, db_key, index):
+        await self.conn.ws.send(json.dumps({"cmdType": "get_index", "key": key, "db_key": self.db_key, "index":index}))
+        response = await self.conn.wait_for_response("get_indexResp", key, self.db_key)
+        return response
+
+    @allow_sync
+    async def set_index(self, key, db_key, index, value):
+        await self.conn.ws.send(json.dumps({"cmdType": "set_index", "key": key, "db_key": self.db_key, "index":index, "value": value}))
+        response = await self.conn.wait_for_response("set_indexResp", key, self.db_key)
+        return response
+
+    @allow_sync
+    async def append_index(self, key, db_key, value):
+        await self.conn.ws.send(json.dumps({"cmdType": "append_index", "key": key, "db_key": self.db_key, "value": value}))
+        response = await self.conn.wait_for_response("app_indexResp", key, self.db_key)
+        return response
+
+    @allow_sync
+    async def get_len_index(self, key, db_key):
+        await self.conn.ws.send(json.dumps({"cmdType": "get_len_index", "key": key, "db_key": self.db_key}))
+        response = await self.conn.wait_for_response("get_len_indexResp", key, self.db_key)
+        return response
+
+    @allow_sync
+    async def get_recent_index(self, key, db_key, num):
+        await self.conn.ws.send(json.dumps({"cmdType": "get_recent_index", "key": key, "db_key": self.db_key, "num":num}))
+        response = await self.conn.wait_for_response("get_recent_indexResp", key, self.db_key)
+        return response   
+
     def __getitem__(self, key):
         return self.get_value(key)
 
@@ -192,6 +243,16 @@ class Connection:
                 elif cmd[0] == "ld":
                     return cmd[1]
                 elif cmd[0] == "auth_msg":
+                    return cmd[1]
+                elif cmd[0] == "get_indexResp"
+                    return cmd[1]
+                elif cmd[0] == "set_indexResp"
+                    return cmd[1]
+                elif cmd[0] == "app_indexResp"
+                    return cmd[1]
+                elif cmd[0] == "get_len_indexResp"
+                    return cmd[1]
+                elif cmd[0] == "get_recent_indexResp"
                     return cmd[1]
 
     async def _create(self, port, ip, loop, responses):

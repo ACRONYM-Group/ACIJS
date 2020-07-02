@@ -11,6 +11,8 @@ try:
 except Exception as e:
     print("__init__ was probably loaded, skipping imports")
 
+ACIVersion = "2020.07.01.1"
+
 
 def create(aci_class, port=8765, ip="127.0.0.1", name="main"):
     """

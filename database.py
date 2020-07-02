@@ -3,32 +3,21 @@ import os
 
 
 class Item:
-    def __init__(self, key, value, owner, read=False, root_dir="./", read_db=""):
+    def __init__(self, key, value, owner, read=False, root_dir="./", read_db="", type="string"):
         self.key = key
         self.value = value
         self.owner = owner
         self.subs = []
         self.root_dir = root_dir
         self.permissions = {}
-        
+        self.type = type
+        self.ver = ACIVersion
+
         if read:
             self.read_from_disk(read_db)
     
     def get_val(self, user):
-        hasPermission = False
-        if user == "backend":
-            hasPermission = True
-        elif "read" in self.permissions:
-            for userPermission in self.permissions["read"]:
-                if user == "NotAuthed":
-                    if userPermission[0] == "a_user" and userPermission[1] == "any":
-                        hasPermission = True
-                else:
-                    if userPermission[0] == user["user_type"] and userPermission[1] == user["user_id"] or userPermission[1] == "authed":
-                        hasPermission = True
-                    if userPermission[0] == user["user_type"] and userPermission[1] == "any" or userPermission[1] == "authed":
-                        hasPermission = True
-        
+        hasPermission = self.authenticate(user, "read")
 
         if hasPermission == True:
             return self.value
@@ -36,10 +25,98 @@ class Item:
             return "Access Denied: Your User ID is not listed in the item permissions table."
 
     def set_val(self, value, user):
+        hasPermission = self.authenticate(user, "write")
+
+        if hasPermission:
+            self.value = value
+            return self.value
+        else:
+            return "Access Denied: Your User ID is not listed in the item permissions table."
+
+    def get_index(self, index, user):
+        if self.authenticate(user, "read"):
+            if not isinstance(index, list):
+                indexs = [index]
+            else:
+                index = index
+
+            table = self.get_val(user)
+            if isinstance(table, list):
+                values = {}
+                for x in range(len(indexs)):
+                    values[indexs[x]] = table[indexs[x]]
+                    return values
+            else:
+                return "ERROR - " + table
+        else:
+            return "Access Denied"
+             
+    
+    def set_index(self, index, value, user):
+        if self.authenticate(user, "write"):
+            if not isinstance(index, list):
+                indexs = [index]
+                values = {index:value}
+            else:
+                indexs = index
+                values = values
+
+            table = self.get_val(user)
+            if isinstance(table, list):
+                values = {}
+                for x in range(len(indexs)):
+                    table[indexs[x]] = values[indexs[x]]
+
+                self.set_val(table, user)
+                return "Success"
+            else:
+                return "ERROR"
+        else:
+            return "Access Denied"
+
+    def append_index(self, value, user):
+        if self.authenticate(user, "write"):
+            if not isinstance(value, list):
+                values = [value]
+            else:
+                values = values
+
+            table = self.get_val(user)
+            if isinstance(table, list):
+                values = {}
+                for x in range(len(values)):
+                    table[len(table)] = values[x]
+
+                if len(table) > self.maxLen:
+                    while len(table) > self.maxLen:
+                        table.pop(0)
+
+                self.set_val(table, user)
+                return "Success"
+            else:
+                return "ERROR"
+        else:
+            return "Access Denied"
+
+    def get_len(self, user):
+        if self.authenticate(user, "read"):
+            table = self.get_val(user)
+            return len(table)
+
+    def get_recent(self, num, user):
+        if self.authenticate(user, "read"):
+            table = self.get_val(user)
+            values = []
+            while num > 0:
+                values.append(table[len(table)-1])
+                num -= 1
+            return values
+    
+    def authenticate(self, user, permission):
         hasPermission = False
         if user == "backend":
             hasPermission = True
-        elif "write" in self.permissions:
+        elif permission in self.permissions:
             for userPermission in self.permissions["write"]:
                 if user == "NotAuthed":
                     if userPermission[0] == "a_user" and userPermission[1] == "any":
@@ -51,10 +128,28 @@ class Item:
                         hasPermission = True
 
         if hasPermission:
-            self.value = value
-            return self.value
+            return True
         else:
-            return "Access Denied: Your User ID is not listed in the item permissions table."
+            return False
+
+
+    def upgrade_item(self, data):
+
+        #Is it a Legacy list based item?
+        if isinstance(data, list):
+            print("Upgrading legacy list item to current")
+            new_data = {
+                "key" : data[0],
+                "value" : data[1],
+                "owner" : data[2],
+                "permissions" : data[3],
+                "subs" : data[4],
+                "type" : data[5],
+                "ver" : self.ver
+            }
+
+            return new_data
+
 
     def write_to_disk(self, database):
         filename = "./databases/%s/" % database
@@ -66,7 +161,7 @@ class Item:
                     raise
 
         with open("./databases/%s/%s.item" % (database, self.key), 'w') as file:
-            file.write(json.dumps([self.key, self.value, self.owner, self.permissions, self.subs]))
+            file.write(json.dumps({"key":self.key, "value":self.value, "owner":self.owner, "permissions":self.permissions, "subs":self.subs, "type":self.type}))
 
     def read_from_disk(self, read_db):
         try:
@@ -74,10 +169,27 @@ class Item:
             with open(filename, 'r') as file:
                 print("Reading", filename)
                 data = json.loads(file.read())
-                if len(data) == 4:
-                    data.insert(3, {"read":[],"write":[]})
 
-            _, self.value, self.owner,  self.permissions, self.subs = data
+            if isinstance(data, list):
+                data = self.upgrade_item(data)
+                    
+
+            self.value = data["value"]
+            if self.value == None:
+                self.value = ""
+            self.owner = data["owner"]
+            if self.owner == None:
+                self.owner = ""
+            self.permissions = data["permissions"]
+            if self.permissions == None:
+                self.permissions = ["read":{}, "write":{}]
+            self.subs = data["subs"]
+            if self.subs == None:
+                self.subs = []
+            self.type = data["type"]
+            if self.type == None:
+                self.type = "string"
+
         except Exception:
             print("WARNING")
             
@@ -89,6 +201,7 @@ class Database:
         self.data = {}
         self.name = name
         self.root_dir = root_dir
+        self.ver = ACIVersion
 
         if read:
             self.read_from_disk()
@@ -111,6 +224,17 @@ class Database:
     def new_item(self, key, value, owner="self"):
         self.data[key] = Item(key, value, owner, root_dir=self.root_dir, permissions={"read":[],"write":[]})
 
+    def upgrade_database(data):
+        if is isinstance(data, list):
+            print("Upgrading legacy list database to current")
+            new_data = {
+                "dbKey": data[0],
+                "keys": data[1],
+                "ver": self.ver
+            }
+
+            return new_data
+
     def write_to_disk(self):
         filename = "./databases/" + self.name + "/"
         if not os.path.exists(os.path.dirname(filename)):
@@ -126,7 +250,7 @@ class Database:
             item_keys.append(val.key)
 
         with open(self.root_dir + "databases/%s/%s.database" % (self.name, self.name), "w") as file:
-            file.write(json.dumps([self.name, item_keys]))
+            file.write(json.dumps({"dbKey":self.name, "keys":item_keys, "ver":self.ver}))
 
     def read_from_disk(self):
         filename = self.root_dir + "databases/%s/%s.database" % (self.name, self.name)
@@ -134,5 +258,8 @@ class Database:
             print(filename)
             db_data = json.loads(file.read())
 
-        for itemKey in db_data[1]:
+        if isinstance(db_data, list):
+            db_data = self.upgrade_database(db_data)
+
+        for itemKey in db_data["keys"]:
             self.data[itemKey] = Item(itemKey, "None", "None", read=True, read_db=self.name)

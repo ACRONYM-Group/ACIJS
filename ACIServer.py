@@ -68,6 +68,26 @@ class Server:
                 response = json.dumps({"cmdType": "setResp", "msg": str(cmd["db_key"]) + "[" + str(cmd["key"]) + "] = " + str(newValue)})
                 await websocket.send(response)
 
+            if cmd["cmdType"] == "get_index":
+                response = json.dumps({"cmdType": "get_indexResp", "msg": self.dbs[cmd["db_key"]].data[cmd["key"]].get_index(cmd["index"], websocket.user)})
+                await websocket.send(response)
+
+            if cmd["cmdType"] == "set_index":
+                response = json.dumps({"cmdType": "set_indexResp", "msg": self.dbs[cmd["db_key"]].data[cmd["key"]].set_index(cmd["index"], cmd["value"], websocket.user)})
+                await websocket.send(response)
+
+            if cmd["cmdType"] == "append_index":
+                response = json.dumps({"cmdType": "app_indexResp", "msg": self.dbs[cmd["db_key"]].data[cmd["key"]].append_index(cmd["value"], websocket.user)})
+                await websocket.send(response)
+
+            if cmd["cmdType"] == "get_len_index":
+                response = json.dumps({"cmdType": "get_len_indexResp", "msg": self.dbs[cmd["db_key"]].data[cmd["key"]].get_len(websocket.user)})
+                await websocket.send(response)
+
+            if cmd["cmdType"] == "get_recent_index":
+                response = json.dumps({"cmdType": "get_recent_indexResp", "msg": self.dbs[cmd["db_key"]].data[cmd["key"]].get_recent(cmd["num"], websocket.user)})
+                await websocket.send(response)
+
             if cmd["cmdType"] == "wtd":
                 self.write_to_disk(cmd["db_key"])
 
@@ -144,6 +164,7 @@ class Server:
 
     def load_config(self):
         try:
+            print("Loading ACI Server version " + ACIServer)
             self.read_from_disk("config")
             self.port = self.dbs["config"].get("port", "backend")
             self.ip = self.dbs["config"].get("ip", "backend")
