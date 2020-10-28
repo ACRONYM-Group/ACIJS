@@ -86,6 +86,10 @@ class connection {
     a_authenticate(id, token) {
         this.websocket.send(JSON.stringify({"cmdType":"a_auth", "id":id, "token":token}));
     }
+
+    send_event(destination, id, data) {
+        this.websocket.send(JSON.stringify({"cmdType":"event", "destination":destination, "event_id":id, "data":data}));
+    }
 }
 
 if (runningInNode) {
