@@ -16,6 +16,7 @@ class connection {
         this.connected = false;
         this.connectedCallBack = connectedCallBack;
         this.messageCallback = messageCallback;
+        this.user_id = "";
     }
 
     start() {
@@ -80,15 +81,17 @@ class connection {
     }
 
     authenticate(id_token) {
+        this.user_id = id;
         this.websocket.send(JSON.stringify({"cmd":"g_auth", "id_token":id_token}));
     }
 
     a_authenticate(id, token) {
+        this.user_id = id;
         this.websocket.send(JSON.stringify({"cmd":"a_auth", "id":id, "token":token}));
     }
 
-    send_event(destination, id, data) {
-        this.websocket.send(JSON.stringify({"cmdType":"event", "destination":destination, "event_id":id, "data":data}));
+    send_event(destination, id, data) { //Send ACI Event
+        this.websocket.send(JSON.stringify({"cmd":"event", "destination":destination, "origin":this.user_id, "event_id":id, "data":data}));
     }
 }
 
